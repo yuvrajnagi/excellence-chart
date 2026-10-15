@@ -1,0 +1,245 @@
+PROJECT OPENEXCEL — BUILD A COMPLETE MICROSOFT EXCEL ALTERNATIVE FROM SCRATCH
+
+You are GPT-6 Astra Ultra operating as an autonomous principal software engineer through Codex.
+
+MISSION
+Build OpenExcel, a genuinely usable, highly capable spreadsheet application inspired by Microsoft Excel. It must include a sophisticated interactive spreadsheet UI, a real formula calculation engine, workbook management, spreadsheet formatting, charts, data operations, XLSX import/export, and persistent storage.
+
+This is a complete software engineering benchmark. Do not create a demo, mockup, static interface, or partial toy spreadsheet. Produce actual source code, tests, documentation, and a runnable application.
+
+AUTONOMY
+Work independently. Do not ask routine clarification questions. Make and document architectural decisions, implement systems in working increments, test each major component, and continue until the complete acceptance checklist is satisfied or environmental limitations prevent further work.
+
+No artificial usage or token budget is imposed by this prompt. Use the available execution budget extensively, without attempting to circumvent actual platform limits.
+
+TECH STACK
+- TypeScript monorepo
+- React + Vite frontend
+- Node.js backend
+- PostgreSQL or SQLite for persistence
+- Custom virtualized spreadsheet renderer
+- Dedicated formula engine with parser, AST, dependency graph, calculation scheduling, and caching
+- Web Workers for computationally intensive operations
+- Playwright for end-to-end tests
+- Vitest for unit/integration tests
+- XLSX interoperability libraries permitted for file parsing/writing, but the spreadsheet calculation engine must be implemented by you
+- Docker deployment support
+
+PART 1 — SPREADSHEET UI
+Build a polished Excel-inspired desktop-style interface including:
+1. Ribbon toolbar with Home, Insert, Formulas, Data, Review, View and File tabs.
+2. Formula bar with editable expressions and name box.
+3. Column letters and row numbers.
+4. Horizontal and vertical scrolling.
+5. Virtualized rendering of at least 1 million addressable rows and 16,384 columns per sheet.
+6. Active-cell selection, rectangular ranges and discontiguous selections.
+7. Mouse and keyboard navigation.
+8. Multi-cell copy, cut and paste.
+9. Fill handle and drag-to-autofill, including series inference.
+10. Undo/redo across values, formulas, formatting, and structural edits.
+11. Column and row insertion, deletion, hiding, resizing, and grouping.
+12. Freeze panes.
+13. Merge and unmerge cells.
+14. Context menus.
+15. Sheet tabs with create, delete, rename, reorder, duplicate and color.
+16. Zoom controls.
+17. Find and replace.
+18. Keyboard shortcuts consistent with familiar spreadsheet applications.
+19. Responsive behavior and accessible keyboard focus.
+20. High-DPI rendering and smooth scrolling.
+
+PART 2 — FORMULA CALCULATION ENGINE
+Implement your own spreadsheet formula language and calculation engine.
+
+Required capabilities:
+- Lexer, parser, and abstract syntax tree
+- Operator precedence and parentheses
+- Numeric, boolean, string and date values
+- Cell references and range references
+- Relative, absolute and mixed references
+- Cross-sheet references
+- Named ranges
+- Error propagation with Excel-like error values
+- Dependency graph and topological recalculation
+- Circular reference detection
+- Incremental recomputation
+- Range dependency optimization
+- Formula reference adjustment during copy, fill and row/column operations
+- Volatile functions and recalculation scheduling
+- Array formulas and dynamic spill ranges
+- Cached calculation results
+- Deterministic evaluation where applicable
+
+Implement a comprehensive function library, including at minimum:
+SUM, AVERAGE, MIN, MAX, COUNT, COUNTA, COUNTIF, COUNTIFS, SUMIF, SUMIFS, AVERAGEIF, IF, IFS, AND, OR, NOT, IFERROR, IFNA, SWITCH, LET, LAMBDA, INDEX, MATCH, XMATCH, XLOOKUP, VLOOKUP, HLOOKUP, FILTER, SORT, SORTBY, UNIQUE, SEQUENCE, TRANSPOSE, TAKE, DROP, CHOOSE, OFFSET, INDIRECT, TEXT, VALUE, LEFT, RIGHT, MID, LEN, TRIM, SUBSTITUTE, REPLACE, CONCAT, TEXTJOIN, FIND, SEARCH, UPPER, LOWER, PROPER, ROUND, ROUNDUP, ROUNDDOWN, INT, MOD, ABS, POWER, SQRT, RAND, RANDBETWEEN, TODAY, NOW, DATE, YEAR, MONTH, DAY, EDATE, EOMONTH, NETWORKDAYS, WORKDAY, PMT, PV, FV, NPV, IRR, STDEV.S, STDEV.P, VAR.S, VAR.P, MEDIAN, LARGE, SMALL, RANK.EQ, and SUBTOTAL.
+
+Add compatibility tests for every implemented function, including invalid parameters, error behavior, and edge cases. Explicitly document Excel compatibility differences.
+
+PART 3 — FORMATTING
+Support:
+- Font selection, sizing, bold, italic, underline and text colors
+- Background fills and cell borders
+- Horizontal and vertical alignment
+- Wrap text and text rotation
+- Numeric, percentage, currency, accounting, scientific and date formatting
+- Custom number formats
+- Format painter
+- Conditional formatting with color scales, data bars, icons and formula-based rules
+- Cell styles and themes
+- Row heights and column widths
+- Rich-text cells if feasible
+
+PART 4 — DATA TOOLS
+Implement:
+- Ascending and descending sorting
+- Multi-column sorting
+- AutoFilter
+- Text-to-columns
+- Duplicate detection/removal
+- Data validation with dropdowns and custom rules
+- Tables with structured references
+- Subtotals
+- Pivot tables with aggregation, row/column dimensions, filtering and refresh
+- CSV/TSV import/export
+- Large data-set handling
+- Basic what-if analysis and Goal Seek
+
+PART 5 — CHARTING
+Implement interactive, editable charts:
+- Line
+- Area
+- Column
+- Bar
+- Scatter
+- Pie
+- Donut
+- Histogram
+- Combo
+
+Charts must reference live worksheet ranges, update when underlying cells change, support axes, legends, series configuration, titles and formatting, and survive save/load.
+
+PART 6 — WORKBOOK MANAGEMENT
+Implement:
+- Multiple workbooks
+- Multiple worksheets per workbook
+- Autosave
+- Manual save
+- Recent files
+- Import and export of XLSX
+- Import and export of CSV
+- Persistent worksheet state
+- Formula and formatting preservation
+- Workbook-level metadata
+- Recoverable save failures
+- Transactional persistence where required
+
+Use existing file-format libraries when appropriate. Do not claim perfect Microsoft Excel binary compatibility; test the supported feature subset and report losses clearly.
+
+PART 7 — ARCHITECTURE AND PERFORMANCE
+Separate the UI, cell storage, formula engine, formatting, workbook model, persistence and file interoperability into modular packages.
+
+Use sparse cell storage instead of allocating the full theoretical grid.
+
+Virtualize visible cells. Avoid full-grid rerenders and unnecessary formula recalculations.
+
+Set performance targets:
+- 100,000 populated cells: scrolling remains responsive on target desktop hardware
+- 100,000 simple dependent formulas: incremental changes update efficiently
+- 1,000,000 populated cells: loading and memory consumption are measured, optimized and documented
+- Large range operations must not freeze the browser UI
+- Expensive formula evaluation should execute off the main thread where feasible
+
+Measure real performance and publish reproducible benchmarks. Do not invent results.
+
+PART 8 — SECURITY AND RELIABILITY
+Treat imported workbook content as untrusted input.
+
+Prevent formula evaluation from executing arbitrary JavaScript.
+Protect against malformed file uploads, oversized payloads, unsafe paths and injection attacks.
+Avoid evaluating untrusted formulas during CSV export.
+Use schema validation at API boundaries.
+Enforce appropriate resource limits.
+Implement reliable persistence and recovery behavior.
+No telemetry or external account requirements.
+
+PART 9 — TESTING
+Create thorough unit, integration, regression, property-based and end-to-end tests.
+
+Test:
+- Formula parsing and precedence
+- Dependency graph correctness
+- Cycles and error propagation
+- Recalculation
+- Copy/fill reference adjustment
+- Undo/redo
+- Selection and keyboard navigation
+- Virtualization
+- Formatting
+- Import/export round trips
+- Workbook persistence
+- Charts linked to data
+- Multi-sheet calculations
+- Large files
+- Corrupt input handling
+- Performance regression
+
+Use Playwright to launch the real app, create a workbook, enter data, write formulas, format cells, insert charts, save, reload, export and import an XLSX file, and verify the resulting state.
+
+PART 10 — ACCEPTANCE WORKBOOK
+Generate a comprehensive test workbook named Excel_Compatibility_Challenge.xlsx containing:
+- Financial model with cross-sheet references
+- Dynamic array formulas
+- Lookup tables
+- Conditional formatting
+- Pivot-style analysis
+- Charts
+- Dates and custom number formats
+- Complex nested formulas
+- Deliberate errors and circular dependencies
+
+Use this workbook for automated regression testing and manual demonstration.
+
+PART 11 — DELIVERY
+Produce:
+1. Complete source repository.
+2. README with installation and startup steps.
+3. One-command development startup.
+4. Production build configuration.
+5. Docker Compose setup.
+6. Architecture documentation.
+7. Formula compatibility matrix.
+8. Test suite with reproducible commands.
+9. Benchmark suite with measured results.
+10. Screenshots of the functioning application.
+11. Sample workbooks.
+12. Honest implementation status report.
+
+DEFINITION OF DONE
+The software must run, not merely compile.
+The formula engine must calculate real values.
+The UI must support real editing and navigation.
+Workbooks must persist correctly.
+Supported XLSX files must import/export.
+Charts must respond to data changes.
+Automated tests must exercise actual functionality.
+Performance must be measured.
+Every advertised feature must have working behavior or be marked incomplete.
+
+EXECUTION STRATEGY
+First inspect the environment and initialize the repository.
+Create an architecture document and implementation roadmap.
+Implement the core data model and calculation engine before advanced UI features.
+Build the interactive spreadsheet and connect it to the engine.
+Implement formatting, persistence, file interoperability, data tools, charts and advanced formulas.
+Continuously run tests and repair failures.
+Perform end-to-end verification in a real browser.
+Audit integration, performance and security.
+Finish by reporting completed features, tests, benchmarks and limitations.
+
+DO NOT STOP AT A PLAN.
+DO NOT DELIVER ONLY A FRONTEND.
+DO NOT GENERATE NONFUNCTIONAL BUTTONS.
+DO NOT REPLACE ENGINEERING WITH STUBS.
+DO NOT FAKE TESTS OR PERFORMANCE RESULTS.
+
+BEGIN IMPLEMENTING OPENEXCEL NOW. Delegate agents to the task
