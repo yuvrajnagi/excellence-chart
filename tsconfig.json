@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/model" },
+    { "path": "packages/formatting" },
+    { "path": "packages/formula" },
+    { "path": "packages/data" },
+    { "path": "packages/interop" },
+    { "path": "apps/server" },
+    { "path": "apps/web" }
+  ]
+}

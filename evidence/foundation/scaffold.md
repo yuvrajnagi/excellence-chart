@@ -1,0 +1,29 @@
+# OpenExcel foundation scaffold - 2026-10-20
+
+- Scope: executable npm workspace configuration only; no application/package implementations, placeholders, or commits.
+- Inputs verified present and read: `openexcellence-prompt`, `docs/contracts.md` (revision 2026-10-20), `docs/architecture.md`, `docs/roadmap.md`.
+- Added root `package.json`, `package-lock.json` (v3), `.gitignore`, `tsconfig{,.base,.tools}.json`, `vitest.config.ts`; seven workspace manifests/tsconfigs; web HTML/Vite config; `scripts/dev.mjs`.
+- Workspace graph: model -> formatting/interop -> formula -> data/server -> web; legal dependency edges and eight public export paths match the contracts.
+- Source condition: `development` exports point to `src/{index,api,syntax,functions}.ts` as applicable; default `types`/`import` retain explicit `dist/*.d.ts`/`dist/*.js`. No aliases or wildcard exports.
+- Runtime observed: `node --version` -> `v24.21.0`; `npm --version` -> `11.19.0` (inspection exit 0).
+- `npm install --no-fund` -> `added 263 packages, and audited 271 packages in 16s`; exit 0; one npm lockfile, no Bun lockfile.
+- `npm exec tsc -- --version` -> `Version 7.0.2`; `npm exec vitest -- --version` -> `vitest/5.0.5 linux-x64 node-v24.21.0`; both exit 0.
+- `npm exec playwright -- --version` -> `Version 1.64.1`; `npm ls --depth=0` -> all seven linked workspaces, no invalid/missing dependencies; both exit 0.
+- Exact pins: React/React DOM 19.3.1, Vite 8.3.4, plugin-react 6.1.2, TypeScript 7.0.2, Vitest 5.0.5, Playwright 1.64.1, tsx 4.23.15.
+- Exact pins: Zod 4.6.7, ExcelJS 4.4.0, fflate 0.8.3, fast-xml-parser 5.11.2; types/node 24.19.2, types/react and types/react-dom 19.3.0. Registry metadata and installed tree verified.
+- `node --check scripts/dev.mjs` and `npm exec tsc -- -p tsconfig.tools.json --pretty false` -> exit 0; actual Vite/Vitest config imports and Vite proxy/root assertions -> `Vite and Vitest runtime configuration: PASS`.
+- Native `node:sqlite` in-memory SELECT/close and tsx/Zod/ExcelJS/ZIP/XML runtime imports -> `Node SQLite, tsx, Zod, ExcelJS, ZIP/XML imports: PASS`; no native SQLite addon dependency.
+- Development `import.meta.resolve` assertions -> `Development export paths: PASS (8 workspace symlinks)`; production resolver assertions -> `Production package export paths: PASS (8)`.
+- Initial source-path assertion incorrectly expected canonical realpaths; Node returns workspace symlink URLs for absent targets. Corrected assertion passed; this verifies export resolution, not missing implementation imports.
+- `npm run dev` -> TS18003: no inputs in `packages/model/tsconfig.json`; compiler exit 2, dispatcher exit 1. Expected at this foundation stage: package `src` files, server `src/index.ts`, and web `src/main.tsx` are downstream work.
+- Dev command performs initial build, compiler watch, Node/tsx server watch, then Vite; awaits server JSON readiness/Vite origin; tracks process groups and cleans owned children on SIGINT/SIGTERM, with bounded kill escalation.
+- Root commands implement dev/test/typecheck/build/test:e2e/benchmark/samples dispatch. Explicit scope deviation: permitted `scripts/dev.mjs` replaces roadmap's `scripts/run.sh`; no out-of-scope shell script was written.
+- Each root invocation creates an owned temporary root; every child gets its own temporary/cache subroot. Persistent workbook data remains separate. Launcher emits JSON cleanup receipts.
+- Final dev failure receipt: run `/tmp/openexcel-finalcheck.25s63R/tmp/openexcel-5KOrUO`, exitCode 1, processCount 1, removed child `child-kjJN07` and run root; outer root removed, exit 2 from the subsequent diff check.
+- Other removed command roots: `/tmp/openexcel-inspect.J3ds0L`, `/tmp/openexcel-registry.hpen0j`, `/tmp/openexcel-resolve.hJpZ0b`, `/tmp/openexcel-install.AryiCt`, `/tmp/openexcel-check.pZYOdU`, `/tmp/openexcel-imports.RlEwsd`, `/tmp/openexcel-config.HQiSqo`, `/tmp/openexcel-launch.6hR2m3`; every command emitted its cleanup receipt.
+- Audit: `npm audit --json` exit 1, two moderate findings (ExcelJS through uuid <11.1.1, GHSA-w5hq-g745-h8pq), zero high/critical. Suggested ExcelJS downgrade is breaking; not applied. Install also reports deprecated transitive dependencies and esbuild install-script approval notice.
+- XLSX limitation: ExcelJS alone does not preserve the required chart/pivot fidelity. Interop must supply bounded OOXML chart relationships/parts and OpenExcel metadata; histogram conversion and materialized pivot export require structured loss reports and user acknowledgment. No XLSX fidelity is claimed here.
+- Full package build/tests, live API/Vite readiness, signal cleanup under serving load, Playwright scenarios, samples, and benchmarks remain unverified until their owners supply implementations. No passing application-suite claim.
+- LSP diagnostics unavailable: typescript-language-server/Biome are not installed; direct configuration typecheck passed instead. No unrelated tool dependencies added.
+- `git diff --check` exit 2 identifies pre-existing trailing whitespace at `openexcellence-prompt:3`; preserved as instructed. `openexcellence-prompt` and `.omo/drafts/openexcel.md` were never edited.
+- Review: launcher is under 200 nonblank/noncomment lines and owns command lifecycle only; no type escapes or production stubs. MODEL and downstream owners can now implement the documented source barrels; lead owns verified commits.

@@ -1,0 +1,8 @@
+{
+  "name": "@openexcel/data",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "dependencies": { "@openexcel/model": "0.1.0", "@openexcel/formula": "0.1.0" }
+}

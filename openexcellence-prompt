@@ -1,7 +1,6 @@
 PROJECT OPENEXCEL — BUILD A COMPLETE MICROSOFT EXCEL ALTERNATIVE FROM SCRATCH
 
-You are GPT-6 Astra Ultra operating as an autonomous principal software engineer through Codex.
-
+You are an agent delegator operating as an autonomous principal software engineer
 MISSION
 Build OpenExcel, a genuinely usable, highly capable spreadsheet application inspired by Microsoft Excel. It must include a sophisticated interactive spreadsheet UI, a real formula calculation engine, workbook management, spreadsheet formatting, charts, data operations, XLSX import/export, and persistent storage.
 

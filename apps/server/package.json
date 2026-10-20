@@ -1,0 +1,7 @@
+{
+  "name": "@openexcel/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": { "@openexcel/model": "0.1.0", "@openexcel/formula": "0.1.0", "@openexcel/interop": "0.1.0" }
+}
