@@ -186,3 +186,32 @@ The planned root commands are `npm run dev`, `npm run test`,
 `npm run typecheck`, `npm run build`, `npm run test:e2e`,
 `npm run samples`, and `npm run benchmark`. These commands are contracts,
 not evidence that they currently exist or pass.
+# Implementation status
+
+## Working
+
+- Sparse workbook model with bounded coordinates and transactional edits.
+- Formula lexer/parser and safe evaluator with Excel-style scalar, range, array, date, lookup, statistical, financial, and text functions.
+- Formula compatibility registry and regression fixtures.
+- React spreadsheet editor with formula bar, address headers, keyboard editing, sheet tab, ribbon-style controls, and chart rendering.
+- XLSX/CSV interoperability package with bounded input handling.
+- Node API health/workbook endpoints and JSON persistence.
+- TypeScript project references, Vite production build, Dockerfile, and Docker Compose.
+
+## In progress
+
+- Full Excel ribbon command coverage, robust multi-range selection, fill-handle UX, and complete undo/redo surface.
+- Complete dependency graph scheduling and spill-range conflict handling.
+- Pivot-table authoring, Goal Seek, and richer conditional-formatting visualization.
+- Browser E2E coverage and reproducible large-workbook benchmark fixtures.
+
+## Verification snapshot
+
+- `npm run typecheck` passes.
+- `npm run build` passes.
+- Focused model/data/formatting tests pass (16 tests).
+- The complete compatibility suite passes: 295 tests across parser, evaluator, function behavior, model, data, and formatting packages.
+
+## Compatibility policy
+
+OpenExcel reports unsupported or lossy XLSX features through compatibility issues. It does not claim binary-perfect Excel compatibility.

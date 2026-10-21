@@ -10,18 +10,19 @@ export const DEFAULT_LIMITS: ResourceLimits = Object.freeze({
   maxAstDepth: 1024, maxArrayCells: 1000000, maxEvaluationSteps: 50000000,
   maxCalculationMs: 30000, maxLambdaDepth: 256,
 });
-const ids = {
+const ids: {
+  readonly [K in keyof IdTypes]: Pick<z.ZodType<IdTypes[K]>, "parse" | "safeParse">
+} = {
   workbook: z.uuid().brand<"WorkbookId">(), sheet: z.uuid().brand<"SheetId">(),
   style: z.uuid().brand<"StyleId">(), object: z.uuid().brand<"ObjectId">(),
   transaction: z.uuid().brand<"TransactionId">(),
 };
 export function createId<K extends keyof IdTypes>(kind: K): IdTypes[K] {
-  // All five validators accept the same UUID representation; only their brands differ.
-  return ids[kind].parse(globalThis.crypto.randomUUID()) as IdTypes[K];
+  return ids[kind].parse(globalThis.crypto.randomUUID());
 }
 export function parseId<K extends keyof IdTypes>(kind: K, input: unknown): Result<IdTypes[K]> {
   const parsed = ids[kind].safeParse(input);
-  return parsed.success ? { ok: true, value: parsed.data as IdTypes[K] }
+  return parsed.success ? { ok: true, value: parsed.data }
     : { ok: false, error: { code: "INVALID_INPUT", message: "Expected a UUID" } };
 }
 export function validPosition(row: number, col: number): boolean {

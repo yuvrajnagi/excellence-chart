@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "id": "36f1cf57-eed8-44ef-af01-aade0db10475",
+  "revision": 1,
+  "properties": {
+    "name": "Excel_Compatibility_Challenge",
+    "dateSystem": "1900",
+    "locale": "en-US",
+    "author": "",
+    "description": "",
+    "createdAt": "2026-10-21T01:53:10.709Z",
+    "modifiedAt": "2026-10-21T01:53:10.709Z",
+    "activeSheetId": "45c55213-b3c3-4b10-9b1a-c3afead7db86",
+    "theme": {
+      "name": "OpenExcel",
+      "fontFamily": "Arial",
+      "colors": [
+        "#FFFFFF",
+        "#000000",
+        "#4472C4",
+        "#ED7D31",
+        "#A5A5A5",
+        "#FFC000"
+      ]
+    },
+    "namedStyles": {}
+  },
+  "sheetOrder": [
+    "45c55213-b3c3-4b10-9b1a-c3afead7db86"
+  ],
+  "sheets": {
+    "45c55213-b3c3-4b10-9b1a-c3afead7db86": {
+      "id": "45c55213-b3c3-4b10-9b1a-c3afead7db86",
+      "tiles": {
+        "0:0": {
+          "0:0": {
+            "input": {
+              "kind": "value",
+              "value": "Revenue"
+            }
+          },
+          "0:1": {
+            "input": {
+              "kind": "value",
+              "value": "Costs"
+            }
+          },
+          "0:2": {
+            "input": {
+              "kind": "value",
+              "value": "Profit"
+            }
+          },
+          "1:0": {
+            "input": {
+              "kind": "value",
+              "value": 125000
+            }
+          },
+          "1:1": {
+            "input": {
+              "kind": "value",
+              "value": 70000
+            }
+          },
+          "1:2": {
+            "input": {
+              "kind": "formula",
+              "source": "=A2-B2"
+            }
+          },
+          "2:0": {
+            "input": {
+              "kind": "value",
+              "value": 150000
+            }
+          },
+          "2:1": {
+            "input": {
+              "kind": "value",
+              "value": 82000
+            }
+          },
+          "2:2": {
+            "input": {
+              "kind": "formula",
+              "source": "=A3-B3"
+            }
+          },
+          "3:0": {
+            "input": {
+              "kind": "value",
+              "value": 175000
+            }
+          },
+          "3:1": {
+            "input": {
+              "kind": "value",
+              "value": 91000
+            }
+          },
+          "3:2": {
+            "input": {
+              "kind": "formula",
+              "source": "=A4-B4"
+            }
+          },
+          "5:0": {
+            "input": {
+              "kind": "value",
+              "value": "Total"
+            }
+          },
+          "5:2": {
+            "input": {
+              "kind": "formula",
+              "source": "=SUM(C2:C4)"
+            }
+          }
+        }
+      },
+      "properties": {
+        "name": "Sheet1",
+        "hidden": false,
+        "defaultRowHeight": 24,
+        "defaultColumnWidth": 100,
+        "rowInfo": {},
+        "columnInfo": {},
+        "groups": [],
+        "merges": [],
+        "conditionalFormats": [],
+        "validations": [],
+        "tables": [],
+        "pivots": [],
+        "charts": [],
+        "view": {
+          "freezeRows": 0,
+          "freezeColumns": 0,
+          "zoom": 100,
+          "scrollRow": 0,
+          "scrollColumn": 0,
+          "active": {
+            "row": 0,
+            "col": 0
+          },
+          "selection": [
+            {
+              "top": 0,
+              "left": 0,
+              "bottom": 0,
+              "right": 0
+            }
+          ],
+          "gridlines": true
+        }
+      }
+    }
+  },
+  "styles": {},
+  "names": []
+}

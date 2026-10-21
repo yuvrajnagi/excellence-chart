@@ -6,7 +6,10 @@
   "exports": {
     ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
     "./syntax": { "types": "./dist/syntax.d.ts", "import": "./dist/syntax.js" },
-    "./functions": { "types": "./dist/functions.d.ts", "import": "./dist/functions.js" }
+    "./functions": { "types": "./dist/functions.d.ts", "import": "./dist/functions.js" },
+    "./ast": { "types": "./dist/ast.d.ts", "import": "./dist/ast.js" },
+    "./lexer": { "types": "./dist/lexer.d.ts", "import": "./dist/lexer.js" },
+    "./parser": { "types": "./dist/parser.d.ts", "import": "./dist/parser.js" }
   },
   "dependencies": { "@openexcel/model": "0.1.0", "@openexcel/formatting": "0.1.0" }
 }

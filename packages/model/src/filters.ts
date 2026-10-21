@@ -18,23 +18,25 @@ export function matchesFilter(value: Scalar, predicate: FilterPredicate): boolea
     case "text": {
       if (typeof value !== "string") return false;
       const actual = value.toLocaleLowerCase("en-US"), expected = predicate.value.toLocaleLowerCase("en-US");
-      switch (predicate.op) {
+      const op = predicate.op;
+      switch (op) {
         case "contains": return actual.includes(expected);
         case "startsWith": return actual.startsWith(expected);
         case "endsWith": return actual.endsWith(expected);
-        default: { const exhaustive: never = predicate.op; return exhaustive; }
+        default: { const exhaustive: never = op; return exhaustive; }
       }
     }
     case "compare": {
       const result = compare(value, predicate.value);
-      switch (predicate.op) {
+      const op = predicate.op;
+      switch (op) {
         case "=": return result === 0;
         case "<>": return result !== 0;
         case "<": return result < 0;
         case "<=": return result <= 0;
         case ">": return result > 0;
         case ">=": return result >= 0;
-        default: { const exhaustive: never = predicate.op; return exhaustive; }
+        default: { const exhaustive: never = op; return exhaustive; }
       }
     }
     default: { const exhaustive: never = predicate; return exhaustive; }

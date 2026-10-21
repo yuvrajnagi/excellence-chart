@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  openexcel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: openexcel
+    ports:
+      - "${PORT:-3001}:3001"
+    volumes:
+      - openexcel-data:/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATA_DIR=/data
+      - STATIC_DIR=/app/apps/web/dist
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/api/v1/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  openexcel-data:
+    driver: local
