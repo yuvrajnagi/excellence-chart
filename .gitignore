@@ -17,3 +17,6 @@ blob-report/
 .openexcel/
 
 /target
+
+dist-release/bin/
+dist-release/*.sqlite*
