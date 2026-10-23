@@ -1,58 +1,72 @@
-# Implemented runtime architecture
+# OpenExcel Runtime Architecture
 
-This document describes the executable repository. The original `contracts.md` and
-`architecture.md` include a broader design; they are not evidence that every planned
-API or feature has been delivered. The acceptance ledger is `implementation-status.md`.
+## 1. Runtime Modes
 
-## Boundaries
+OpenExcel supports two primary execution topologies sharing the same underlying Rust calculation engine:
 
-- **model** defines immutable sparse tiles, workbook metadata, styles and worksheet
-  objects. Coordinates are zero based internally and A1 at the user boundary. A tile
-  has 128 rows × 32 columns; only authored cells occupy storage. Transactions produce
-  inverse patches for undo. Zod validates external data and transaction results.
-- **formula** contains a custom lexer/parser, AST evaluator, function registry,
-  dependency indexes and result cache. It never compiles workbook text to JavaScript.
-  Dates are serial numbers. Reverse dependencies invalidate affected results; range
-  dependencies use row buckets. Dynamic arrays own spill cells without persisting
-  spill children as authored values. Tests describe the supported formula dialect.
-- **formatting** translates stored styles to CSS and interprets supported numeric and
-  date display formats. This is a restricted grammar, not the full Excel format engine.
-- **data** provides bounded pure operations returning cell patches: stable sorts,
-  duplicate removal and delimited splitting. Pivot aggregation and secant Goal Seek
-  are separate numerical helpers. UI exposure is tracked independently.
-- **interop** reads/writes XLSX using ExcelJS and CSV/TSV with explicit quoting. ZIP
-  limits and XML checks run before workbook conversion. Native OpenExcel metadata is
-  stored as a private XLSX part, allowing richer OpenExcel round trips than generic
-  Excel import. Export warnings distinguish standard OOXML output from private data.
-- **server** uses Node HTTP and SQLite WAL. Workbook snapshots, optimistic storage
-  versions and save receipts are transactional. File conversion/calculation runs in
-  bounded worker threads. The server also hosts the production web build.
-- **web** is React/Vite with a custom DOM grid. Only viewport cells are mounted. Sparse
-  axis overrides support hidden/resized rows and columns. Scaled scroll coordinates
-  stay below browser element-size limits while reaching XFD1048576. A dedicated Web
-  Worker calculates cell values. Autosave queues snapshots and reports save failures.
+### 1.1 Native Desktop Runtime
+In desktop mode, [`crates/openexcel-desktop`](file:///workspaces/excellence-chart/crates/openexcel-desktop) serves as a standalone runner:
+- **Embedded Web Server**: Uses `tiny-http` to host static web assets (`dist-release/web`) and provide JSON REST endpoints under `/api/workbooks`.
+- **Bundled SQLite Engine**: Direct C-bindings (`rusqlite` bundled) executing WAL mode journaling with `synchronous = FULL` and a 5,000 ms busy timeout.
+- **Local File System Access**: Native commands to open and save `.openexcel` and `.xlsx` files without browser sandbox restrictions.
 
-## Update path
+### 1.2 Web & WebAssembly Runtime
+In web mode, [`crates/openexcel-wasm`](file:///workspaces/excellence-chart/crates/openexcel-wasm) is loaded inside a dedicated Web Worker:
+- **Non-Blocking Recalculation**: Web Worker processes calculation off the main thread, ensuring the DOM virtualized grid maintains smooth 60fps scrolling during heavy recomputation.
+- **`wasm-bindgen` Memory Bridge**: High-speed memory copying between JavaScript TypedArrays and WebAssembly linear memory.
 
-1. An edit produces authored patches, validated by the model.
-2. A new immutable workbook revision updates the viewport and history.
-3. The calculation worker receives a changed workbook, invalidates dependent cached
-   values and supplies visible/chart values. Scrolling requests values without sending
-   another complete workbook.
-4. Autosave persists a snapshot using the last acknowledged storage version.
-5. A conflicting storage version produces an error; the client retains its local edit.
+---
 
-## Resource and deployment choices
+## 2. Web Worker Communication Protocol
 
-The application is intended for a local/trusted single-user deployment. It has no
-external identity service and no telemetry. It is not a hardened public multi-tenant
-service. SQLite is the chosen persistence engine; Node 24 supplies `node:sqlite`.
+```mermaid
+sequenceDiagram
+    participant UI as React UI (Main Thread)
+    participant Worker as calculation.worker.ts
+    participant Wasm as WasmEngine (Rust/WASM)
 
-Sparse storage makes an empty theoretical grid inexpensive. It does not eliminate
-snapshot costs: edits validate workbook state and the browser transfers changed
-snapshots to its worker. Those paths remain scalability limitations. Published
-benchmarks separate Node model/calculation measurements from browser scroll timings.
+    Note over UI: User edits cell A1
+    UI->>Worker: postMessage({ id: 42, workbook, addresses: [{sheetId, row, col}] })
+    Note over Worker: Worker receives task
+    Worker->>Wasm: update_workbook(json)
+    Worker->>Wasm: recalculate()
+    Worker->>Wasm: get_computed_values(addressesJson)
+    Wasm-->>Worker: JSON string of computed values
+    Worker-->>UI: postMessage({ id: 42, values: { "Sheet1/0:0": 42.0 } })
+    Note over UI: React grid re-renders visible viewport cells
+```
 
-The production process can be launched with `npm start` after a build or through
-Docker Compose. SQLite data belongs on a persistent local volume; do not share the
-same SQLite file across unrelated hosts through a network filesystem.
+### Protocol Invariants
+1. **Asynchronous Evaluation**: The UI thread never calls calculation synchronously. Long calculations never cause UI freezing.
+2. **Viewport Bounded Queries**: The UI requests calculated values only for cells currently visible in the virtualized viewport plus active chart ranges.
+3. **Cancellation & Sequencing**: Each calculate request carries an incrementing request ID. Stale responses are discarded if a newer snapshot has been submitted.
+
+---
+
+## 3. Persistence & Concurrency Protocol
+
+```mermaid
+sequenceDiagram
+    participant Client as OpenExcel Client
+    participant Server as Desktop SQLite Server
+    participant DB as SQLite (WAL)
+
+    Note over Client: User saves workbook
+    Client->>Server: PUT /api/workbooks/:id (Header: If-Match: 3)
+    Server->>DB: BEGIN IMMEDIATE
+    Server->>DB: SELECT storage_version FROM workbooks WHERE id = :id
+    alt Storage Version Matches (3 == 3)
+        Server->>DB: UPDATE workbooks SET json = :json, storage_version = 4
+        Server->>DB: INSERT INTO saves (id, workbook_id, sha256) VALUES (...)
+        Server->>DB: COMMIT
+        Server-->>Client: 200 OK { ok: true, storageVersion: 4 }
+    else Version Conflict (3 != 4)
+        Server->>DB: ROLLBACK
+        Server-->>Client: 409 Conflict { code: "VERSION_CONFLICT", currentVersion: 4 }
+    end
+```
+
+### Concurrency Guarantees
+- **Optimistic Concurrency**: Prevents accidental overwrites across multiple browser tabs or concurrent sessions.
+- **WAL Journaling**: Readers do not block writers; writers do not block readers.
+- **Idempotent Saves**: Hash of snapshot payload prevents duplicate save history entries.

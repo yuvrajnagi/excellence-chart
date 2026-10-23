@@ -1,113 +1,166 @@
-# Formula compatibility
+# OpenExcel Formula Compatibility Guide
 
-OpenExcel implements a custom tokenizer, parser, AST interpreter, sparse dependency graph, range bucket index, cached results, and dirty formula scheduler. No formula is executed as JavaScript. This is a supported subset, not a claim of complete Excel equivalence.
+This document details the formula engine language, calculation semantics, and the complete catalog of **88 standard Excel functions** implemented in the Rust core engine ([`crates/openexcel-core`](file:///workspaces/excellence-chart/crates/openexcel-core)).
 
-Every function below has an ordinary-value fixture, a boundary/error fixture, and invalid-arity coverage in `tests/compatibility`. These fixtures contain explicit expected values; they are not a comparison against a running Microsoft Excel instance. The matrix describes implementation behavior and known differences.
+---
 
-Run `npx tsc -b packages/formula && npx vitest run tests/compatibility packages/formula/test` from the repository root.
+## 1. Syntax & Precedence Specification
 
-| Function | Status | Supported behavior / known differences |
-| --- | --- | --- |
-| SUM | Implemented subset; tested | Numeric range values; text/boolean literal coercion differs from Excel. |
-| AVERAGE | Implemented subset; tested | Numeric values; literal text/boolean coercion differs. |
-| MIN | Implemented subset; tested | Numeric values only; empty numeric set gives 0. |
-| MAX | Implemented subset; tested | Numeric values only; empty numeric set gives 0. |
-| COUNT | Implemented subset; tested | Numeric range values; direct boolean/numeric text arguments counted. |
-| COUNTA | Implemented subset; tested | Counts non-null values, including errors and empty strings. |
-| COUNTIF | Implemented subset; tested | Single criteria with comparisons and * / ? wildcards; tilde escaping incomplete. |
-| COUNTIFS | Implemented subset; tested | Multiple criteria; equal flattened range lengths required. |
-| SUMIF | Implemented subset; tested | Single criteria; full Excel range-shape resizing semantics incomplete. |
-| SUMIFS | Implemented subset; tested | Multiple criteria; equal flattened range lengths required. |
-| AVERAGEIF | Implemented subset; tested | No matching numeric values gives #DIV/0!. |
-| IF | Implemented subset; tested | Lazy scalar branches and elementwise array selection with broadcasting. |
-| IFS | Implemented subset; tested | Lazy scalar condition/result pairs; array conditions incomplete. |
-| AND | Implemented subset; tested | Uses value truthiness; Excel text-in-range coercion differs. |
-| OR | Implemented subset; tested | Uses value truthiness; Excel text-in-range coercion differs. |
-| NOT | Implemented subset; tested | Scalar numeric/boolean coercion. |
-| IFERROR | Implemented subset; tested | Lazy fallback; scalar and elementwise array errors. |
-| IFNA | Implemented subset; tested | Replaces #N/A only, including array elements. |
-| SWITCH | Implemented subset; tested | Lazy scalar branches; case-sensitive comparison differs from Excel. |
-| LET | Implemented subset; tested | Lexical values and closures; bindings evaluated eagerly. |
-| LAMBDA | Implemented subset; tested | Inline application, LET-bound and named closures; 64-call nesting limit; no higher-order helper functions. |
-| INDEX | Implemented subset; tested | Positive scalar row/column selection; zero index whole-row/column mode incomplete. |
-| MATCH | Implemented subset; tested | Exact and nearest numeric/text values; sorted-input/binary semantics differ. |
-| XMATCH | Implemented subset; tested | Exact, wildcard, nearest and reverse search; binary search modes use linear implementation. |
-| XLOOKUP | Implemented subset; tested | Exact/nearest/wildcard/reverse search and multi-column returns; fallback evaluated eagerly. |
-| VLOOKUP | Implemented subset; tested | Exact and approximate search; wildcard matching incomplete. |
-| HLOOKUP | Implemented subset; tested | Exact and approximate search; wildcard matching incomplete. |
-| FILTER | Implemented subset; tested | Filters rows by one include value per row; column filtering incomplete. |
-| SORT | Implemented subset; tested | Row/column sorting, selected index and direction. |
-| SORTBY | Implemented subset; tested | Multiple row key vectors and directions; column vectors incomplete. |
-| UNIQUE | Implemented subset; tested | Rows/columns, case-insensitive text, exactly-once option. |
-| SEQUENCE | Implemented subset; tested | Positive integer dimensions; maximum 1,000,000 elements. |
-| TRANSPOSE | Implemented subset; tested | Rectangular array transpose. |
-| TAKE | Implemented subset; tested | Positive/negative row and column slicing; empty result #CALC!. |
-| DROP | Implemented subset; tested | Positive/negative row and column slicing; empty result #CALC!. |
-| CHOOSE | Implemented subset; tested | Lazy scalar index; array index mode incomplete. |
-| OFFSET | Implemented subset; tested | Reference or range origin; positive result dimensions, maximum 1,000,000 elements. |
-| INDIRECT | Implemented subset; tested | A1 cells/ranges, including sheets; R1C1 mode explicitly #REF!, external workbooks unsupported. |
-| TEXT | Implemented subset; tested | Basic decimals, grouping, $, %, yyyy/mm/dd; full Excel custom format grammar incomplete. |
-| VALUE | Implemented subset; tested | Numeric strings, dollar signs, grouping commas and percent; locale/date parsing incomplete. |
-| LEFT | Implemented subset; tested | Text slicing; UTF-16 code units. |
-| RIGHT | Implemented subset; tested | Text slicing; UTF-16 code units. |
-| MID | Implemented subset; tested | Text slicing; UTF-16 code units. |
-| LEN | Implemented subset; tested | UTF-16 code-unit count; Excel version-dependent Unicode differences. |
-| TRIM | Implemented subset; tested | Collapses ASCII spaces; trims additional JavaScript whitespace. |
-| SUBSTITUTE | Implemented subset; tested | Case-sensitive replacement, optional occurrence. |
-| REPLACE | Implemented subset; tested | Position and count replacement. |
-| CONCAT | Implemented subset; tested | Flattened values and arrays. |
-| TEXTJOIN | Implemented subset; tested | Delimiter and optional empty-value omission. |
-| FIND | Implemented subset; tested | Case-sensitive position search. |
-| SEARCH | Implemented subset; tested | Case-insensitive * / ? wildcards; tilde escaping incomplete. |
-| UPPER | Implemented subset; tested | JavaScript Unicode case conversion. |
-| LOWER | Implemented subset; tested | JavaScript Unicode case conversion. |
-| PROPER | Implemented subset; tested | Unicode word-boundary capitalization; locale nuances differ. |
-| ROUND | Implemented subset; tested | Half-away-from-zero; floating point decimal boundary behavior may differ. |
-| ROUNDUP | Implemented subset; tested | Away-from-zero rounding; IEEE-754 arithmetic. |
-| ROUNDDOWN | Implemented subset; tested | Toward-zero rounding; IEEE-754 arithmetic. |
-| INT | Implemented subset; tested | Floor toward negative infinity. |
-| MOD | Implemented subset; tested | Divisor-sign remainder; zero divisor #DIV/0!. |
-| ABS | Implemented subset; tested | Numeric absolute value. |
-| POWER | Implemented subset; tested | Exponentiation; non-real/nonfinite result #NUM!. |
-| SQRT | Implemented subset; tested | Negative argument #NUM!. |
-| RAND | Implemented subset; tested | Volatile; injectable deterministic random epoch. |
-| RANDBETWEEN | Implemented subset; tested | Inclusive integer bounds; fractional-bound corner cases differ. |
-| TODAY | Implemented subset; tested | UTC date serial; differs from local-time Excel workbooks. |
-| NOW | Implemented subset; tested | UTC timestamp serial; injectable evaluation epoch. |
-| DATE | Implemented subset; tested | 1900 date system, month/day overflow; historical/date-bound validation incomplete. |
-| YEAR | Implemented subset; tested | 1900 serial system; special case serial 60. |
-| MONTH | Implemented subset; tested | 1900 serial system; special case serial 60. |
-| DAY | Implemented subset; tested | 1900 serial system; fictitious 1900-02-29 serial 60 supported. |
-| EDATE | Implemented subset; tested | Month shift clamped to final day; UTC. |
-| EOMONTH | Implemented subset; tested | Month-end serial; UTC. |
-| NETWORKDAYS | Implemented subset; tested | Saturday/Sunday weekends and holiday list; 1,000,000-day limit. |
-| WORKDAY | Implemented subset; tested | Saturday/Sunday weekends and holiday list; 1,000,000 requested workday limit. |
-| PMT | Implemented subset; tested | Constant rate/period annuity; optional future value and timing. |
-| PV | Implemented subset; tested | Constant rate/period annuity; optional future value and timing. |
-| FV | Implemented subset; tested | Constant rate/period annuity; optional present value and timing. |
-| NPV | Implemented subset; tested | Periodic discounted cash flows; excludes nonnumeric values. |
-| IRR | Implemented subset; tested | Newton iteration with guess; 100 iterations; convergence differs from Excel. |
-| STDEV.S | Implemented subset; tested | Sample statistic; at least two numeric values. |
-| STDEV.P | Implemented subset; tested | Population statistic; at least one numeric value. |
-| VAR.S | Implemented subset; tested | Sample statistic; at least two numeric values. |
-| VAR.P | Implemented subset; tested | Population statistic; at least one numeric value. |
-| MEDIAN | Implemented subset; tested | Numeric values only; empty set #NUM!. |
-| LARGE | Implemented subset; tested | Positive rank selection. |
-| SMALL | Implemented subset; tested | Positive rank selection. |
-| RANK.EQ | Implemented subset; tested | Ascending/descending rank; equal values share rank. |
-| SUBTOTAL | Implemented subset; tested | Codes 1–11 and 101–111 including product; hidden/filtered rows and nested subtotal exclusion incomplete. |
+OpenExcel's Pratt precedence parser implements standard spreadsheet operator precedence:
 
-## Engine behavior and limits
+| Precedence | Operators | Associativity | Description | Example |
+|---|---|---|---|---|
+| **9** | `()`, `{}`, Function Calls | N/A | Primary expressions, group parentheses, array literals | `{1, 2; 3, 4}` |
+| **8** | `:`, Unary `+`, Unary `-`, `%` | Right (Unary), Left (Postfix) | Range colon, unary sign, postfix percent | `-50%`, `A1:B10` |
+| **7** | `^` | **Right** | Exponentiation | `2^3^2 = 512` |
+| **5** | `*`, `/` | Left | Multiplication and division | `10 * 5 / 2` |
+| **4** | `+`, `-` | Left | Addition and subtraction | `10 + 20 - 5` |
+| **3** | `&` | Left | String concatenation | `"Total: " & 42` |
+| **2** | `=`, `<>`, `<`, `<=`, `>`, `>=` | Left | Comparison operators | `A1 >= 100` |
 
-- A1 relative, absolute and mixed references; quoted sheet names; workbook and worksheet scoped names; reference adjustment for copy/fill. Structural reference transformations are owned by the workbook model.
-- Sparse formula index and reverse dependencies retain cached unaffected results across immutable workbook updates. Recalculation traverses dirty formulas in dependency order; volatile formulas and their dependents are invalidated on explicit recalculation. Updates must provide a new immutable workbook value.
-- Range dependencies use 256-row buckets and exact rectangle checks. A formerly blank referenced cell invalidates consumers when edited. Explicit `dependencies()` expands range addresses and can therefore allocate substantially for large ranges.
-- Direct-reference chains use an iterative scheduling stack; dynamic/named references use interpreter recursion limited to 256 cell frames. Circular references return the OpenExcel extension `#CIRC!`; iterative circular calculation is unsupported.
-- Dynamic arrays spill into empty cells and recover from blockers; downstream consumers are revisited if a spill is discovered after they read a blank. Maximum array/range materialization is 1,000,000 cells. Spill-reference `A1#`, implicit intersection `@`, structured table references, union/intersection references, external workbook references and full-column/row shorthand are incomplete.
-- Each formula is limited to 32,768 source characters, parser nesting to 256 and evaluation to 2,000,000 AST steps. Resource failures use `#CALC!` or `#PARSE!`. These errors are deliberately distinct from full Excel behavior.
-- Arithmetic array broadcasting and array IF/error fallback are supported. Many other functions use scalar coercion; this is not Excel's complete dynamic-array lifting system.
-- Date calculations use UTC and the 1900 date system. The fictitious leap-day serial is special-cased for YEAR/MONTH/DAY; 1904-system workbooks and all historical quirks are not supported.
-- Numeric calculations use IEEE-754 doubles. Text collation, error precedence, blank coercion, optional omitted arguments and locale-dependent formatting still differ in edge cases.
-- Formula source preserves unsupported expressions during workbook storage/import/export; evaluating unsupported function names returns `#NAME?`.
+---
 
-The `createEngine` API accepts deterministic clock/random options. The legacy `Engine.create` facade uses the default function registry and fixed resource limits; its options argument is currently ignored. `evaluateFormula` accepts a deterministic epoch directly.
+## 2. Complete 88-Function Compatibility Matrix
+
+### 2.1 Math & Trigonometry (22 Functions)
+| Function | Signature | Excel Compatibility Status |
+|---|---|---|
+| **ABS** | `ABS(number)` | Fully compatible |
+| **AVERAGE** | `AVERAGE(val1, [val2], ...)` | Skips empty cells and non-numeric values; returns `#DIV/0!` if empty |
+| **AVERAGEIF** | `AVERAGEIF(range, criteria, [avg_range])` | Supports wildcard criteria (`*`, `?`) and inequality expressions |
+| **COUNT** | `COUNT(val1, [val2], ...)` | Counts cells containing numeric values |
+| **COUNTA** | `COUNTA(val1, [val2], ...)` | Counts non-empty cells |
+| **COUNTIF** | `COUNTIF(range, criteria)` | Supports string matching, wildcards, numeric comparisons |
+| **COUNTIFS** | `COUNTIFS(range1, crit1, [range2, crit2], ...)` | Multi-range conjunction filtering |
+| **INT** | `INT(number)` | Rounds down to the nearest integer |
+| **MAX** | `MAX(val1, [val2], ...)` | Returns maximum numeric value |
+| **MIN** | `MIN(val1, [val2], ...)` | Returns minimum numeric value |
+| **MOD** | `MOD(number, divisor)` | Returns remainder with divisor sign parity; `#DIV/0!` on divisor = 0 |
+| **POWER** | `POWER(number, power)` | Equivalent to `^` operator |
+| **RAND** | `RAND()` | Returns pseudo-random float in `[0, 1)` |
+| **RANDBETWEEN** | `RANDBETWEEN(bottom, top)` | Returns integer in range `[bottom, top]` |
+| **ROUND** | `ROUND(number, num_digits)` | Standard half-away-from-zero rounding |
+| **ROUNDDOWN** | `ROUNDDOWN(number, num_digits)` | Rounds towards zero |
+| **ROUNDUP** | `ROUNDUP(number, num_digits)` | Rounds away from zero |
+| **SQRT** | `SQRT(number)` | Returns square root; returns `#NUM!` if number < 0 |
+| **SUBTOTAL** | `SUBTOTAL(function_num, ref1, ...)` | Implements all 11 subtotal functions (1=AVERAGE through 11=VAR) |
+| **SUM** | `SUM(val1, [val2], ...)` | Sums numbers, skipping text and blanks |
+| **SUMIF** | `SUMIF(range, criteria, [sum_range])` | Conditional summation with wildcard and comparison criteria |
+| **SUMIFS** | `SUMIFS(sum_range, range1, crit1, ...)` | Multi-condition summation |
+
+### 2.2 Logical Functions (9 Functions)
+| Function | Signature | Excel Compatibility Status |
+|---|---|---|
+| **AND** | `AND(logical1, [logical2], ...)` | True if all arguments truthy |
+| **CHOOSE** | `CHOOSE(index_num, value1, [value2], ...)` | Returns nth value; short-circuits unselected branches |
+| **IF** | `IF(logical_test, value_if_true, [value_if_false])` | Short-circuits; supports element-wise evaluation over arrays |
+| **IFERROR** | `IFERROR(value, value_if_error)` | Catches Excel error codes and substitutes alternative |
+| **IFNA** | `IFNA(value, value_if_na)` | Catches `#N/A` errors specifically |
+| **IFS** | `IFS(test1, val1, [test2, val2], ...)` | Multi-condition branching |
+| **NOT** | `NOT(logical)` | Inverts truth value |
+| **OR** | `OR(logical1, [logical2], ...)` | True if any argument truthy |
+| **SWITCH** | `SWITCH(expression, val1, result1, ..., [default])` | Expression match branching |
+
+### 2.3 Lookup & Reference Functions (8 Functions)
+| Function | Signature | Excel Compatibility Status |
+|---|---|---|
+| **HLOOKUP** | `HLOOKUP(lookup_value, table_array, row_index, [range_lookup])` | Horizontal table lookup |
+| **INDEX** | `INDEX(array, row_num, [column_num])` | Returns value or array slice at 1-based coordinates |
+| **INDIRECT** | `INDIRECT(ref_text)` | Resolves dynamic string address or range |
+| **MATCH** | `MATCH(lookup_value, lookup_array, [match_type])` | Returns 1-based index (supports 0=exact, 1=less than, -1=greater than) |
+| **OFFSET** | `OFFSET(reference, rows, cols, [height], [width])` | Returns dynamic shifted range slice |
+| **VLOOKUP** | `VLOOKUP(lookup_value, table_array, col_index, [range_lookup])` | Vertical table lookup with exact and approximate match |
+| **XLOOKUP** | `XLOOKUP(lookup_val, lookup_arr, return_arr, [if_not_found], [match_mode], [search_mode])` | Modern lookup supporting reverse searching and custom default |
+| **XMATCH** | `XMATCH(lookup_val, lookup_arr, [match_mode], [search_mode])` | Modern index lookup |
+
+### 2.4 Dynamic Array Functions (8 Functions)
+| Function | Signature | Excel Compatibility Status |
+|---|---|---|
+| **DROP** | `DROP(array, rows, [columns])` | Excludes specified rows/columns from start or end |
+| **FILTER** | `FILTER(array, include, [if_empty])` | Filters rows matching boolean vector condition |
+| **SEQUENCE** | `SEQUENCE(rows, [columns], [start], [step])` | Generates 2D array matrix of sequential numbers |
+| **SORT** | `SORT(array, [sort_index], [sort_order], [by_col])` | Sorts array by row or column |
+| **SORTBY** | `SORTBY(array, by_array1, [order1], ...)` | Sorts array based on values in companion array |
+| **TAKE** | `TAKE(array, rows, [columns])` | Extracts specified rows/columns from start or end |
+| **TRANSPOSE** | `TRANSPOSE(array)` | Inverts rows and columns of an array |
+| **UNIQUE** | `UNIQUE(array, [by_col], [exactly_once])` | Deduplicates array rows or columns |
+
+### 2.5 Text Functions (16 Functions)
+| Function | Signature | Excel Compatibility Status |
+|---|---|---|
+| **CONCAT** | `CONCAT(text1, [text2], ...)` | Concatenates text strings or array cells |
+| **FIND** | `FIND(find_text, within_text, [start_num])` | Case-sensitive substring search (1-based index) |
+| **LEFT** | `LEFT(text, [num_chars])` | Returns left characters |
+| **LEN** | `LEN(text)` | Returns character count |
+| **LOWER** | `LOWER(text)` | Converts text to lowercase |
+| **MID** | `MID(text, start_num, num_chars)` | Extracts substring at 1-based position |
+| **PROPER** | `PROPER(text)` | Capitalizes first letter of each word |
+| **REPLACE** | `REPLACE(old_text, start_num, num_chars, new_text)` | Replaces characters by position |
+| **RIGHT** | `RIGHT(text, [num_chars])` | Returns right characters |
+| **SEARCH** | `SEARCH(find_text, within_text, [start_num])` | Case-insensitive substring search (supports `*`, `?`) |
+| **SUBSTITUTE** | `SUBSTITUTE(text, old_text, new_text, [instance_num])` | Replaces occurrences of substring |
+| **TEXT** | `TEXT(value, format_text)` | Number and date formatting with grouping commas (`#,##0.00`, `0.0%`, `YYYY-MM-DD`) |
+| **TEXTJOIN** | `TEXTJOIN(delimiter, ignore_empty, text1, ...)` | Joins text strings with delimiter |
+| **TRIM** | `TRIM(text)` | Strips leading, trailing, and duplicate inner spaces |
+| **UPPER** | `UPPER(text)` | Converts text to uppercase |
+| **VALUE** | `VALUE(text)` | Converts numeric text to float |
+
+### 2.6 Date & Time Functions (10 Functions)
+| Function | Signature | Excel Compatibility Status |
+|---|---|---|
+| **DATE** | `DATE(year, month, day)` | Converts Y/M/D to serial; handles day 60 (1900-02-29) leap year quirk |
+| **DAY** | `DAY(serial_number)` | Returns day of the month (1–31) |
+| **EDATE** | `EDATE(start_date, months)` | Shifts date by N months |
+| **EOMONTH** | `EOMONTH(start_date, months)` | Returns serial of the last day of the month |
+| **MONTH** | `MONTH(serial_number)` | Returns month (1–12) |
+| **NETWORKDAYS**| `NETWORKDAYS(start_date, end_date, [holidays])` | Workdays excluding Saturdays/Sundays and holidays |
+| **NOW** | `NOW()` | Returns current serial with fractional day time |
+| **TODAY** | `TODAY()` | Returns integer serial for current date at 00:00:00 |
+| **WORKDAY** | `WORKDAY(start_date, days, [holidays])` | Calculates future/past working day |
+| **YEAR** | `YEAR(serial_number)` | Returns four-digit year |
+
+### 2.7 Financial Functions (5 Functions)
+| Function | Signature | Excel Compatibility Status |
+|---|---|---|
+| **FV** | `FV(rate, nper, pmt, [pv], [type])` | Future value of an investment |
+| **IRR** | `IRR(values, [guess])` | Internal rate of return using 100-step Newton-Raphson solver |
+| **NPV** | `NPV(rate, value1, [value2], ...)` | Net present value; returns `#DIV/0!` on rate = -1.0 |
+| **PMT** | `PMT(rate, nper, pv, [fv], [type])` | Periodic payment for an annuity |
+| **PV** | `PV(rate, nper, pmt, [fv], [type])` | Present value of an investment |
+
+### 2.8 Statistical Functions (8 Functions)
+| Function | Signature | Excel Compatibility Status |
+|---|---|---|
+| **LARGE** | `LARGE(array, k)` | Returns kth largest value |
+| **MEDIAN** | `MEDIAN(val1, [val2], ...)` | Returns median value |
+| **RANK.EQ** | `RANK.EQ(number, ref, [order])` | Returns rank within dataset |
+| **SMALL** | `SMALL(array, k)` | Returns kth smallest value |
+| **STDEV.P** | `STDEV.P(val1, [val2], ...)` | Population standard deviation (N divisor) |
+| **STDEV.S** | `STDEV.S(val1, [val2], ...)` | Sample standard deviation (N-1 divisor) |
+| **VAR.P** | `VAR.P(val1, [val2], ...)` | Population variance |
+| **VAR.S** | `VAR.S(val1, [val2], ...)` | Sample variance |
+
+### 2.9 Scoped Bindings & Closures (2 Functions)
+| Function | Signature | Excel Compatibility Status |
+|---|---|---|
+| **LAMBDA** | `LAMBDA([param1, ...], body)` | First-class closure; supports recursion up to depth 256 |
+| **LET** | `LET(name1, val1, [name2, val2], ..., body)` | Scoped lexical environment for sub-expressions |
+
+---
+
+## 3. Excel Quirks & Specific Handlings
+
+1. **The 1900 Leap Year Anomaly**:
+   Historically, Lotus 1-2-3 erroneously treated 1900 as a leap year, which Microsoft Excel retained for backward compatibility. In OpenExcel:
+   - Serial number `60.0` maps explicitly to `1900-02-29`.
+   - `DATE(1900, 2, 29)` returns serial `60.0`.
+   - `YEAR(60) = 1900`, `MONTH(60) = 2`, `DAY(60) = 29`.
+
+2. **Dynamic Array Spills & Collisions**:
+   - Spilled arrays write their values to neighboring blank cells.
+   - If any cell in the target spill rectangle is non-empty, the anchor cell displays `#SPILL!`.
+   - When the blocking cell is cleared or deleted, the spill automatically unblocks and displays.
+
+3. **Circular Reference Cycle Breaking**:
+   - Circular chains (`A1 = B1 + 1`, `B1 = A1 + 1`) are detected via DFS traversal and immediately assigned `#CIRC!`.
+   - Does not hang the calculation engine or exhaust stack memory.

@@ -1302,3 +1302,50 @@ One service instance manages one open workbook. `open` must complete successfull
 Before downstream implementation, MODEL compiles the model/API declarations and schema round trips; FORMULA compiles syntax/functions/Engine against them. Each consumer imports the exact paths above in a small compile-only public-API fixture. An automated import-boundary check rejects every unlisted workspace edge, including type-only imports. All modules use strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes, verbatimModuleSyntax and exhaustive discriminants.
 
 The final integration owner must exercise: edit -> commit -> replica -> calculation delta -> chart -> save -> restart -> load -> XLSX export -> import. Error tests cover stale revisions, cancelled calculation, save conflict, worker restart, spill obstruction, malformed archives and undo of structural references. A type-level interface match alone is not behavioral evidence.
+
+
+## 14. Rust Core & Dual-Target Contracts (Native Desktop & WASM)
+
+### 14.1 `openexcel-core` Public Rust API
+```rust
+// crate: crates/openexcel-core
+pub struct Engine<'a> {
+    pub fn new(workbook: &'a Workbook) -> Self;
+    pub fn update_cell(&mut self, sheet_id: &str, row: u32, col: u32, input: CellInput);
+    pub fn recalculate(&mut self) -> Result<RecalcResult, ErrorCode>;
+    pub fn value(&self, addr: &CellAddress) -> ComputedValue;
+    pub fn evaluate_formula(&mut self, sheet_id: &str, row: u32, col: u32, formula: &str) -> Result<ComputedValue, ErrorCode>;
+}
+
+pub struct PrattParser<'a> {
+    pub fn new(tokens: Vec<Token<'a>>) -> Self;
+    pub fn parse_expression(&mut self, precedence: u8) -> Result<AstNode, ErrorCode>;
+}
+
+pub struct DependencyGraph {
+    pub fn register_dependencies(&mut self, cell: CellAddress, ast: &AstNode);
+    pub fn topological_order(&self, dirty: &[CellAddress]) -> Result<Vec<CellAddress>, ErrorCode>;
+}
+```
+
+### 14.2 `openexcel-wasm` WebAssembly Bindings
+```typescript
+// package: packages/formula-wasm
+export class WasmEngine {
+  constructor();
+  static fromJson(json_str: string): WasmEngine;
+  updateWorkbook(json_str: string): void;
+  recalculate(): { dirty_cells_recalculated: number; elapsed_micros: number };
+  evaluateFormula(sheet_id: string, row: number, col: number, formula: string): string;
+  getComputedValues(addresses_json: string): string;
+  format_address(row: number, col: number): string;
+}
+export function init_panic_hook(): void;
+export function openexcel_version(): string;
+```
+
+### 14.3 `openexcel-desktop` HTTP & Persistence API
+- `POST /api/workbooks`: Creates new blank or snapshot workbook, returns `{ workbook, storageVersion }`.
+- `GET /api/workbooks`: Lists recent workbooks with metadata.
+- `GET /api/workbooks/:id`: Fetches workbook snapshot.
+- `PUT /api/workbooks/:id`: Atomic update. Requires `If-Match: <storageVersion>` header. Returns HTTP 409 `VERSION_CONFLICT` on mismatch.
