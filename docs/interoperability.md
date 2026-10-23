@@ -1,6 +1,6 @@
 # File interoperability and persistence
 
-`packages/interop` uses ExcelJS for OOXML cell/style parsing and writing. Calculation is performed by OpenExcel's own formula engine. It does not execute formula text as JavaScript.
+`packages/interop` uses ExcelJS for OOXML cell/style parsing and writing, and `crates/openexcel-desktop/src/file_io.rs` provides native desktop filesystem I/O for saving and loading `.openexcel` and `.xlsx` archives. Calculation is performed by OpenExcel's custom Rust formula calculation engine. Formula text is never executed as JavaScript.
 
 ## Supported XLSX subset
 
