@@ -1,5 +1,5 @@
 use openexcel_desktop::server::DesktopServer;
-use openexcel_desktop::storage::{create_blank_workbook, WorkbookStore};
+use openexcel_desktop::storage::WorkbookStore;
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -137,7 +137,25 @@ fn test_embedded_server_full_crud_and_concurrency() {
     assert_eq!(status, 200);
     assert_eq!(save_res["storageVersion"], 2);
 
-    // 6. Test optimistic concurrency conflict (repeat PUT with stale If-Match 1)
+    // 6. Test optimistic concurrency conflict (new saveId with stale If-Match 1)
+    let conflict_wb = serde_json::json!({
+        "workbook": {
+            "id": wb_id,
+            "revision": 3,
+            "properties": {
+                "name": "Conflicting Edit",
+                "dateSystem": "1900",
+                "locale": "en-US"
+            },
+            "sheetOrder": ["sheet1"],
+            "sheets": {},
+            "styles": {},
+            "names": []
+        },
+        "saveId": "save_req_2"
+    });
+    let conflict_body = serde_json::to_string(&conflict_wb).unwrap();
+
     let (status, conflict_res) = http_send(
         port,
         "PUT",
@@ -146,7 +164,7 @@ fn test_embedded_server_full_crud_and_concurrency() {
             ("Content-Type", "application/json"),
             ("If-Match", "\"1\""),
         ],
-        &put_body,
+        &conflict_body,
     );
     // Stale version must yield 409 Conflict
     assert_eq!(status, 409);

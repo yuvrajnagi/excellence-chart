@@ -177,7 +177,7 @@ fn test_receipt_history_bounded_to_100() {
     assert_eq!(current.version, 121);
 
     // Check count of saves in DB for this workbook
-    let count: i64 = store
+    let _count: i64 = store
         .get_json("wb_bounded", false)
         .and_then(|_| {
             let res = store
@@ -187,7 +187,7 @@ fn test_receipt_history_bounded_to_100() {
         })
         .map(|_| {
             // Check raw saves count via internal helper or query
-            let mut list_stmt = store.list(1, 0, "recent").unwrap();
+            let list_stmt = store.list(1, 0, "recent").unwrap();
             assert_eq!(list_stmt.items.len(), 1);
             0i64
         })
