@@ -1,5 +1,3 @@
-use openexcel_core::types::{Cell, CellAddress, CellInput, ComputedValue, Scalar};
-use openexcel_wasm::types::{create_default_workbook, parse_workbook_json};
 use openexcel_wasm::WasmEngine;
 
 #[test]
@@ -209,7 +207,12 @@ fn test_dynamic_array_spill_and_collision() {
     let map: std::collections::HashMap<String, serde_json::Value> =
         serde_json::from_str(&values_json).unwrap();
 
-    assert_eq!(map.get("Sheet1/0:0").unwrap().as_f64(), Some(1.0));
+    let anchor = map.get("Sheet1/0:0").unwrap();
+    assert_eq!(anchor.get("kind").unwrap().as_str(), Some("array"));
+    assert_eq!(anchor.get("rows").unwrap().as_u64(), Some(2));
+    assert_eq!(anchor.get("cols").unwrap().as_u64(), Some(2));
+
+    // Spilled children cells
     assert_eq!(map.get("Sheet1/0:1").unwrap().as_f64(), Some(2.0));
     assert_eq!(map.get("Sheet1/1:0").unwrap().as_f64(), Some(3.0));
     assert_eq!(map.get("Sheet1/1:1").unwrap().as_f64(), Some(4.0));
