@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "36f1cf57-eed8-44ef-af01-aade0db10475",
+  "id": "c8565583-6c95-480a-a3bf-f06bc7a2a18d",
   "revision": 1,
   "properties": {
     "name": "Excel_Compatibility_Challenge",
@@ -8,9 +8,9 @@
     "locale": "en-US",
     "author": "",
     "description": "",
-    "createdAt": "2026-10-21T01:53:10.709Z",
-    "modifiedAt": "2026-10-21T01:53:10.709Z",
-    "activeSheetId": "45c55213-b3c3-4b10-9b1a-c3afead7db86",
+    "createdAt": "2026-01-01T00:00:00.000Z",
+    "modifiedAt": "2026-01-01T00:00:00.000Z",
+    "activeSheetId": "2ec71fda-16a2-47e3-864f-c9ab273e8d6b",
     "theme": {
       "name": "OpenExcel",
       "fontFamily": "Arial",
@@ -26,101 +26,529 @@
     "namedStyles": {}
   },
   "sheetOrder": [
-    "45c55213-b3c3-4b10-9b1a-c3afead7db86"
+    "2ec71fda-16a2-47e3-864f-c9ab273e8d6b",
+    "51a85f50-4651-4993-b53b-3b3351f2bd48",
+    "daa441fd-a580-42ab-a6ee-d02239b685d9",
+    "a7a727e9-a4d4-466d-9257-73e4426217a4",
+    "a2d553c8-733a-47ec-a797-2f650181b2be",
+    "80628386-3dc7-49de-b998-c7b8a464c8c5"
   ],
   "sheets": {
-    "45c55213-b3c3-4b10-9b1a-c3afead7db86": {
-      "id": "45c55213-b3c3-4b10-9b1a-c3afead7db86",
+    "2ec71fda-16a2-47e3-864f-c9ab273e8d6b": {
+      "id": "2ec71fda-16a2-47e3-864f-c9ab273e8d6b",
       "tiles": {
         "0:0": {
           "0:0": {
             "input": {
               "kind": "value",
-              "value": "Revenue"
-            }
+              "value": "Year"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
           },
           "0:1": {
             "input": {
               "kind": "value",
-              "value": "Costs"
-            }
+              "value": "Revenue"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
           },
           "0:2": {
             "input": {
               "kind": "value",
-              "value": "Profit"
-            }
+              "value": "Costs"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "0:3": {
+            "input": {
+              "kind": "value",
+              "value": "Operating profit"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "0:4": {
+            "input": {
+              "kind": "value",
+              "value": "Tax"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "0:5": {
+            "input": {
+              "kind": "value",
+              "value": "Net profit"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
           },
           "1:0": {
             "input": {
               "kind": "value",
-              "value": 125000
+              "value": 2026
             }
           },
           "1:1": {
             "input": {
-              "kind": "value",
-              "value": 70000
-            }
+              "kind": "formula",
+              "source": "='Assumptions'!$B$6"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
           },
           "1:2": {
             "input": {
               "kind": "formula",
-              "source": "=A2-B2"
-            }
+              "source": "=B2*'Assumptions'!$B$3"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "1:3": {
+            "input": {
+              "kind": "formula",
+              "source": "=B2-C2"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "1:4": {
+            "input": {
+              "kind": "formula",
+              "source": "=D2*'Assumptions'!$B$4"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "1:5": {
+            "input": {
+              "kind": "formula",
+              "source": "=D2-E2"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
           },
           "2:0": {
             "input": {
               "kind": "value",
-              "value": 150000
+              "value": 2027
             }
           },
           "2:1": {
             "input": {
-              "kind": "value",
-              "value": 82000
-            }
+              "kind": "formula",
+              "source": "=B2*(1+'Assumptions'!$B$2)"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
           },
           "2:2": {
             "input": {
               "kind": "formula",
-              "source": "=A3-B3"
-            }
+              "source": "=B3*'Assumptions'!$B$3"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "2:3": {
+            "input": {
+              "kind": "formula",
+              "source": "=B3-C3"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "2:4": {
+            "input": {
+              "kind": "formula",
+              "source": "=D3*'Assumptions'!$B$4"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "2:5": {
+            "input": {
+              "kind": "formula",
+              "source": "=D3-E3"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
           },
           "3:0": {
             "input": {
               "kind": "value",
-              "value": 175000
+              "value": 2028
             }
           },
           "3:1": {
             "input": {
-              "kind": "value",
-              "value": 91000
-            }
+              "kind": "formula",
+              "source": "=B3*(1+'Assumptions'!$B$2)"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
           },
           "3:2": {
             "input": {
               "kind": "formula",
-              "source": "=A4-B4"
+              "source": "=B4*'Assumptions'!$B$3"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "3:3": {
+            "input": {
+              "kind": "formula",
+              "source": "=B4-C4"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "3:4": {
+            "input": {
+              "kind": "formula",
+              "source": "=D4*'Assumptions'!$B$4"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "3:5": {
+            "input": {
+              "kind": "formula",
+              "source": "=D4-E4"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "4:0": {
+            "input": {
+              "kind": "value",
+              "value": 2029
             }
+          },
+          "4:1": {
+            "input": {
+              "kind": "formula",
+              "source": "=B4*(1+'Assumptions'!$B$2)"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "4:2": {
+            "input": {
+              "kind": "formula",
+              "source": "=B5*'Assumptions'!$B$3"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "4:3": {
+            "input": {
+              "kind": "formula",
+              "source": "=B5-C5"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "4:4": {
+            "input": {
+              "kind": "formula",
+              "source": "=D5*'Assumptions'!$B$4"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "4:5": {
+            "input": {
+              "kind": "formula",
+              "source": "=D5-E5"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
           },
           "5:0": {
             "input": {
               "kind": "value",
-              "value": "Total"
+              "value": 2030
             }
+          },
+          "5:1": {
+            "input": {
+              "kind": "formula",
+              "source": "=B5*(1+'Assumptions'!$B$2)"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
           },
           "5:2": {
             "input": {
               "kind": "formula",
-              "source": "=SUM(C2:C4)"
+              "source": "=B6*'Assumptions'!$B$3"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "5:3": {
+            "input": {
+              "kind": "formula",
+              "source": "=B6-C6"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "5:4": {
+            "input": {
+              "kind": "formula",
+              "source": "=D6*'Assumptions'!$B$4"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "5:5": {
+            "input": {
+              "kind": "formula",
+              "source": "=D6-E6"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "7:0": {
+            "input": {
+              "kind": "value",
+              "value": "Net present value"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "7:1": {
+            "input": {
+              "kind": "formula",
+              "source": "=NPV('Assumptions'!B5,F2:F6)"
+            },
+            "styleId": "70f4a94d-feea-4994-9e3f-a558c44f6e26"
+          },
+          "9:0": {
+            "input": {
+              "kind": "value",
+              "value": "Nested decision"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "9:1": {
+            "input": {
+              "kind": "formula",
+              "source": "=IFERROR(IF(AVERAGE(F2:F6)>40000,\"Healthy\",\"Review\"),\"Check inputs\")"
             }
           }
         }
       },
       "properties": {
-        "name": "Sheet1",
+        "name": "Financial Model",
+        "hidden": false,
+        "defaultRowHeight": 24,
+        "defaultColumnWidth": 132,
+        "rowInfo": {},
+        "columnInfo": {},
+        "groups": [],
+        "merges": [],
+        "conditionalFormats": [
+          {
+            "id": "41dcf877-6447-48d9-911e-85dd8bcdb391",
+            "kind": "colorScale",
+            "range": {
+              "top": 1,
+              "left": 5,
+              "bottom": 5,
+              "right": 5
+            },
+            "priority": 1,
+            "stopIfTrue": false,
+            "stops": [
+              {
+                "threshold": {
+                  "kind": "minimum"
+                },
+                "color": "#F8696B"
+              },
+              {
+                "threshold": {
+                  "kind": "maximum"
+                },
+                "color": "#63BE7B"
+              }
+            ]
+          }
+        ],
+        "validations": [],
+        "tables": [],
+        "pivots": [],
+        "charts": [
+          {
+            "id": "8aa371a7-c88a-474f-9c3a-258621033796",
+            "kind": "column",
+            "title": "Revenue and net profit",
+            "series": [
+              {
+                "id": "16c54c03-4388-48ef-a3b6-e5c84148722d",
+                "name": "Revenue",
+                "values": {
+                  "sheetId": "2ec71fda-16a2-47e3-864f-c9ab273e8d6b",
+                  "top": 1,
+                  "left": 1,
+                  "bottom": 5,
+                  "right": 1
+                },
+                "categories": {
+                  "sheetId": "2ec71fda-16a2-47e3-864f-c9ab273e8d6b",
+                  "top": 1,
+                  "left": 0,
+                  "bottom": 5,
+                  "right": 0
+                },
+                "axis": "primary",
+                "color": "#4472C4"
+              },
+              {
+                "id": "ebba1913-4f18-4f2d-ba1b-0f6336f2e156",
+                "name": "Net profit",
+                "values": {
+                  "sheetId": "2ec71fda-16a2-47e3-864f-c9ab273e8d6b",
+                  "top": 1,
+                  "left": 5,
+                  "bottom": 5,
+                  "right": 5
+                },
+                "categories": {
+                  "sheetId": "2ec71fda-16a2-47e3-864f-c9ab273e8d6b",
+                  "top": 1,
+                  "left": 0,
+                  "bottom": 5,
+                  "right": 0
+                },
+                "axis": "primary",
+                "color": "#4DAA77"
+              }
+            ],
+            "anchor": {
+              "row": 12,
+              "col": 0,
+              "offsetX": 0,
+              "offsetY": 0,
+              "width": 650,
+              "height": 300
+            },
+            "axes": {
+              "x": {
+                "title": "Year",
+                "logarithmic": false,
+                "numberFormat": "General",
+                "gridlines": true
+              },
+              "y": {
+                "title": "USD",
+                "logarithmic": false,
+                "numberFormat": "General",
+                "gridlines": true
+              }
+            },
+            "legend": "bottom",
+            "showHidden": false,
+            "blankAs": "gap",
+            "stacked": false,
+            "background": "#FFFFFF"
+          }
+        ],
+        "view": {
+          "freezeRows": 1,
+          "freezeColumns": 0,
+          "zoom": 100,
+          "scrollRow": 0,
+          "scrollColumn": 0,
+          "active": {
+            "row": 0,
+            "col": 0
+          },
+          "selection": [
+            {
+              "top": 0,
+              "left": 0,
+              "bottom": 0,
+              "right": 0
+            }
+          ],
+          "gridlines": true
+        },
+        "tabColor": "#217346"
+      }
+    },
+    "51a85f50-4651-4993-b53b-3b3351f2bd48": {
+      "id": "51a85f50-4651-4993-b53b-3b3351f2bd48",
+      "tiles": {
+        "0:0": {
+          "0:0": {
+            "input": {
+              "kind": "value",
+              "value": "Metric"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "0:1": {
+            "input": {
+              "kind": "value",
+              "value": "Value"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "1:0": {
+            "input": {
+              "kind": "value",
+              "value": "Revenue growth"
+            }
+          },
+          "1:1": {
+            "input": {
+              "kind": "value",
+              "value": 0.12
+            }
+          },
+          "2:0": {
+            "input": {
+              "kind": "value",
+              "value": "Cost ratio"
+            }
+          },
+          "2:1": {
+            "input": {
+              "kind": "value",
+              "value": 0.58
+            }
+          },
+          "3:0": {
+            "input": {
+              "kind": "value",
+              "value": "Tax rate"
+            }
+          },
+          "3:1": {
+            "input": {
+              "kind": "value",
+              "value": 0.21
+            }
+          },
+          "4:0": {
+            "input": {
+              "kind": "value",
+              "value": "Discount rate"
+            }
+          },
+          "4:1": {
+            "input": {
+              "kind": "value",
+              "value": 0.08
+            }
+          },
+          "5:0": {
+            "input": {
+              "kind": "value",
+              "value": "Initial revenue"
+            }
+          },
+          "5:1": {
+            "input": {
+              "kind": "value",
+              "value": 120000
+            }
+          },
+          "6:0": {
+            "input": {
+              "kind": "value",
+              "value": "Start date"
+            },
+            "styleId": "9fb97652-51a8-4ae0-a0c1-aba63427f002"
+          },
+          "6:1": {
+            "input": {
+              "kind": "value",
+              "value": 46023
+            },
+            "styleId": "9fb97652-51a8-4ae0-a0c1-aba63427f002"
+          }
+        }
+      },
+      "properties": {
+        "name": "Assumptions",
         "hidden": false,
         "defaultRowHeight": 24,
         "defaultColumnWidth": 100,
@@ -152,10 +580,665 @@
             }
           ],
           "gridlines": true
+        },
+        "tabColor": "#4472C4"
+      }
+    },
+    "daa441fd-a580-42ab-a6ee-d02239b685d9": {
+      "id": "daa441fd-a580-42ab-a6ee-d02239b685d9",
+      "tiles": {
+        "0:0": {
+          "0:0": {
+            "input": {
+              "kind": "value",
+              "value": "SKU"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "0:1": {
+            "input": {
+              "kind": "value",
+              "value": "Product"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "0:2": {
+            "input": {
+              "kind": "value",
+              "value": "Price"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "1:0": {
+            "input": {
+              "kind": "value",
+              "value": "P100"
+            }
+          },
+          "1:1": {
+            "input": {
+              "kind": "value",
+              "value": "Notebook"
+            }
+          },
+          "1:2": {
+            "input": {
+              "kind": "value",
+              "value": 12
+            }
+          },
+          "2:0": {
+            "input": {
+              "kind": "value",
+              "value": "P200"
+            }
+          },
+          "2:1": {
+            "input": {
+              "kind": "value",
+              "value": "Keyboard"
+            }
+          },
+          "2:2": {
+            "input": {
+              "kind": "value",
+              "value": 75
+            }
+          },
+          "3:0": {
+            "input": {
+              "kind": "value",
+              "value": "P300"
+            }
+          },
+          "3:1": {
+            "input": {
+              "kind": "value",
+              "value": "Monitor"
+            }
+          },
+          "3:2": {
+            "input": {
+              "kind": "value",
+              "value": 240
+            }
+          },
+          "6:0": {
+            "input": {
+              "kind": "value",
+              "value": "Exact lookup"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "6:1": {
+            "input": {
+              "kind": "formula",
+              "source": "=XLOOKUP(\"P200\",A2:A4,C2:C4)"
+            }
+          },
+          "7:1": {
+            "input": {
+              "kind": "formula",
+              "source": "=VLOOKUP(\"P300\",A2:C4,3,FALSE)"
+            }
+          }
         }
+      },
+      "properties": {
+        "name": "Lookup Tables",
+        "hidden": false,
+        "defaultRowHeight": 24,
+        "defaultColumnWidth": 100,
+        "rowInfo": {},
+        "columnInfo": {},
+        "groups": [],
+        "merges": [],
+        "conditionalFormats": [],
+        "validations": [],
+        "tables": [
+          {
+            "id": "5d4b5022-006a-4f80-9957-0912ab7aeac0",
+            "name": "ProductCatalog",
+            "range": {
+              "top": 0,
+              "left": 0,
+              "bottom": 3,
+              "right": 2
+            },
+            "columns": [
+              {
+                "id": "2214102f-2c68-478a-b8e4-495a1422562a",
+                "name": "SKU"
+              },
+              {
+                "id": "16cccbc5-cf45-4aef-8f5b-46d9959bd970",
+                "name": "Product"
+              },
+              {
+                "id": "ce7aa2ca-74b6-436c-aefd-9a59a6a541a8",
+                "name": "Price"
+              }
+            ],
+            "totalsRow": false,
+            "filter": {
+              "range": {
+                "top": 0,
+                "left": 0,
+                "bottom": 3,
+                "right": 2
+              },
+              "header": true,
+              "columns": []
+            }
+          }
+        ],
+        "pivots": [],
+        "charts": [],
+        "view": {
+          "freezeRows": 0,
+          "freezeColumns": 0,
+          "zoom": 100,
+          "scrollRow": 0,
+          "scrollColumn": 0,
+          "active": {
+            "row": 0,
+            "col": 0
+          },
+          "selection": [
+            {
+              "top": 0,
+              "left": 0,
+              "bottom": 0,
+              "right": 0
+            }
+          ],
+          "gridlines": true
+        },
+        "tabColor": "#ED7D31"
+      }
+    },
+    "a7a727e9-a4d4-466d-9257-73e4426217a4": {
+      "id": "a7a727e9-a4d4-466d-9257-73e4426217a4",
+      "tiles": {
+        "0:0": {
+          "0:0": {
+            "input": {
+              "kind": "value",
+              "value": "Sequence"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "1:0": {
+            "input": {
+              "kind": "formula",
+              "source": "=SEQUENCE(5,3,1,1)"
+            }
+          },
+          "0:4": {
+            "input": {
+              "kind": "value",
+              "value": "Filtered prices"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "1:4": {
+            "input": {
+              "kind": "formula",
+              "source": "=FILTER('Lookup Tables'!C2:C4,'Lookup Tables'!C2:C4>20)"
+            }
+          },
+          "8:0": {
+            "input": {
+              "kind": "value",
+              "value": "LET calculation"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "9:0": {
+            "input": {
+              "kind": "formula",
+              "source": "=LET(revenue,120000,cost,70000,revenue-cost)"
+            }
+          }
+        }
+      },
+      "properties": {
+        "name": "Dynamic Arrays",
+        "hidden": false,
+        "defaultRowHeight": 24,
+        "defaultColumnWidth": 100,
+        "rowInfo": {},
+        "columnInfo": {},
+        "groups": [],
+        "merges": [],
+        "conditionalFormats": [],
+        "validations": [],
+        "tables": [],
+        "pivots": [],
+        "charts": [],
+        "view": {
+          "freezeRows": 0,
+          "freezeColumns": 0,
+          "zoom": 100,
+          "scrollRow": 0,
+          "scrollColumn": 0,
+          "active": {
+            "row": 0,
+            "col": 0
+          },
+          "selection": [
+            {
+              "top": 0,
+              "left": 0,
+              "bottom": 0,
+              "right": 0
+            }
+          ],
+          "gridlines": true
+        },
+        "tabColor": "#7030A0"
+      }
+    },
+    "a2d553c8-733a-47ec-a797-2f650181b2be": {
+      "id": "a2d553c8-733a-47ec-a797-2f650181b2be",
+      "tiles": {
+        "0:0": {
+          "0:0": {
+            "input": {
+              "kind": "value",
+              "value": "Region"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "0:1": {
+            "input": {
+              "kind": "value",
+              "value": "Quarter"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "0:2": {
+            "input": {
+              "kind": "value",
+              "value": "Sales"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "1:0": {
+            "input": {
+              "kind": "value",
+              "value": "North"
+            }
+          },
+          "1:1": {
+            "input": {
+              "kind": "value",
+              "value": "Q1"
+            }
+          },
+          "1:2": {
+            "input": {
+              "kind": "value",
+              "value": 120
+            }
+          },
+          "2:0": {
+            "input": {
+              "kind": "value",
+              "value": "South"
+            }
+          },
+          "2:1": {
+            "input": {
+              "kind": "value",
+              "value": "Q1"
+            }
+          },
+          "2:2": {
+            "input": {
+              "kind": "value",
+              "value": 95
+            }
+          },
+          "3:0": {
+            "input": {
+              "kind": "value",
+              "value": "North"
+            }
+          },
+          "3:1": {
+            "input": {
+              "kind": "value",
+              "value": "Q2"
+            }
+          },
+          "3:2": {
+            "input": {
+              "kind": "value",
+              "value": 160
+            }
+          },
+          "4:0": {
+            "input": {
+              "kind": "value",
+              "value": "South"
+            }
+          },
+          "4:1": {
+            "input": {
+              "kind": "value",
+              "value": "Q2"
+            }
+          },
+          "4:2": {
+            "input": {
+              "kind": "value",
+              "value": 140
+            }
+          },
+          "5:0": {
+            "input": {
+              "kind": "value",
+              "value": "North"
+            }
+          },
+          "5:1": {
+            "input": {
+              "kind": "value",
+              "value": "Q1"
+            }
+          },
+          "5:2": {
+            "input": {
+              "kind": "value",
+              "value": 30
+            }
+          },
+          "0:5": {
+            "input": {
+              "kind": "value",
+              "value": "Region"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "0:6": {
+            "input": {
+              "kind": "value",
+              "value": "Q1"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "0:7": {
+            "input": {
+              "kind": "value",
+              "value": "Q2"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "0:8": {
+            "input": {
+              "kind": "value",
+              "value": "Total"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "1:5": {
+            "input": {
+              "kind": "value",
+              "value": "North"
+            }
+          },
+          "1:6": {
+            "input": {
+              "kind": "value",
+              "value": 150
+            }
+          },
+          "1:7": {
+            "input": {
+              "kind": "value",
+              "value": 160
+            }
+          },
+          "1:8": {
+            "input": {
+              "kind": "value",
+              "value": 310
+            }
+          },
+          "2:5": {
+            "input": {
+              "kind": "value",
+              "value": "South"
+            }
+          },
+          "2:6": {
+            "input": {
+              "kind": "value",
+              "value": 95
+            }
+          },
+          "2:7": {
+            "input": {
+              "kind": "value",
+              "value": 140
+            }
+          },
+          "2:8": {
+            "input": {
+              "kind": "value",
+              "value": 235
+            }
+          },
+          "3:5": {
+            "input": {
+              "kind": "value",
+              "value": "Total"
+            }
+          },
+          "3:6": {
+            "input": {
+              "kind": "value",
+              "value": 245
+            }
+          },
+          "3:7": {
+            "input": {
+              "kind": "value",
+              "value": 300
+            }
+          },
+          "3:8": {
+            "input": {
+              "kind": "value",
+              "value": 545
+            }
+          }
+        }
+      },
+      "properties": {
+        "name": "Analysis",
+        "hidden": false,
+        "defaultRowHeight": 24,
+        "defaultColumnWidth": 100,
+        "rowInfo": {},
+        "columnInfo": {},
+        "groups": [],
+        "merges": [],
+        "conditionalFormats": [],
+        "validations": [],
+        "tables": [],
+        "pivots": [
+          {
+            "id": "e6289d3a-1447-4fab-9385-6fb7c133f45f",
+            "name": "RegionalSales",
+            "source": {
+              "sheetId": "a2d553c8-733a-47ec-a797-2f650181b2be",
+              "top": 0,
+              "left": 0,
+              "bottom": 5,
+              "right": 2
+            },
+            "destination": {
+              "sheetId": "a2d553c8-733a-47ec-a797-2f650181b2be",
+              "row": 0,
+              "col": 5
+            },
+            "rows": [
+              0
+            ],
+            "columns": [
+              1
+            ],
+            "values": [
+              {
+                "offset": 2,
+                "aggregate": "sum",
+                "label": "Sales"
+              }
+            ],
+            "filters": [],
+            "rowTotals": true,
+            "columnTotals": true,
+            "output": {
+              "sheetId": "a2d553c8-733a-47ec-a797-2f650181b2be",
+              "top": 0,
+              "left": 5,
+              "bottom": 3,
+              "right": 8
+            },
+            "refreshedAtRevision": 1
+          }
+        ],
+        "charts": [],
+        "view": {
+          "freezeRows": 0,
+          "freezeColumns": 0,
+          "zoom": 100,
+          "scrollRow": 0,
+          "scrollColumn": 0,
+          "active": {
+            "row": 0,
+            "col": 0
+          },
+          "selection": [
+            {
+              "top": 0,
+              "left": 0,
+              "bottom": 0,
+              "right": 0
+            }
+          ],
+          "gridlines": true
+        },
+        "tabColor": "#00A6A6"
+      }
+    },
+    "80628386-3dc7-49de-b998-c7b8a464c8c5": {
+      "id": "80628386-3dc7-49de-b998-c7b8a464c8c5",
+      "tiles": {
+        "0:0": {
+          "0:0": {
+            "input": {
+              "kind": "value",
+              "value": "Deliberate errors"
+            },
+            "styleId": "675f3fd0-3a6e-48c5-be03-fc0471711a03"
+          },
+          "1:0": {
+            "input": {
+              "kind": "formula",
+              "source": "=1/0"
+            }
+          },
+          "2:0": {
+            "input": {
+              "kind": "formula",
+              "source": "=UNKNOWNFUNCTION(1)"
+            }
+          },
+          "3:0": {
+            "input": {
+              "kind": "formula",
+              "source": "=A5"
+            }
+          },
+          "4:0": {
+            "input": {
+              "kind": "formula",
+              "source": "=A4"
+            }
+          },
+          "5:0": {
+            "input": {
+              "kind": "formula",
+              "source": "=SQRT(-1)"
+            }
+          },
+          "6:0": {
+            "input": {
+              "kind": "formula",
+              "source": "=IFERROR(A2,\"Handled\")"
+            }
+          }
+        }
+      },
+      "properties": {
+        "name": "Errors",
+        "hidden": false,
+        "defaultRowHeight": 24,
+        "defaultColumnWidth": 100,
+        "rowInfo": {},
+        "columnInfo": {},
+        "groups": [],
+        "merges": [],
+        "conditionalFormats": [],
+        "validations": [],
+        "tables": [],
+        "pivots": [],
+        "charts": [],
+        "view": {
+          "freezeRows": 0,
+          "freezeColumns": 0,
+          "zoom": 100,
+          "scrollRow": 0,
+          "scrollColumn": 0,
+          "active": {
+            "row": 0,
+            "col": 0
+          },
+          "selection": [
+            {
+              "top": 0,
+              "left": 0,
+              "bottom": 0,
+              "right": 0
+            }
+          ],
+          "gridlines": true
+        },
+        "tabColor": "#C00000"
       }
     }
   },
-  "styles": {},
+  "styles": {
+    "675f3fd0-3a6e-48c5-be03-fc0471711a03": {
+      "font": {
+        "bold": true,
+        "color": "#FFFFFF",
+        "size": 12
+      },
+      "fill": "#217346"
+    },
+    "70f4a94d-feea-4994-9e3f-a558c44f6e26": {
+      "numberFormat": "$#,##0.00;($#,##0.00)"
+    },
+    "9fb97652-51a8-4ae0-a0c1-aba63427f002": {
+      "numberFormat": "yyyy-mm-dd"
+    },
+    "be9d04dc-707b-4beb-907a-c1e7e3c88799": {
+      "numberFormat": "0.0%"
+    }
+  },
   "names": []
 }

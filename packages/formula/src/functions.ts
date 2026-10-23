@@ -12,12 +12,24 @@ const compare=(a:Scalar,b:Scalar)=>typeof a==='string'&&typeof b==='string'?a.to
 export function criteria(value:Scalar,criterion:ComputedValue):boolean{const c=scalar(criterion);if(typeof c!=='string')return compare(value,c)===0;const m=/^(<=|>=|<>|=|<|>)(.*)$/.exec(c);if(m){const x=m[2]!,b=x!==''&&Number.isFinite(Number(x))?Number(x):x;const n=compare(value,b);return m[1]==='='?n===0:m[1]==='<>'?n!==0:m[1]==='<'?n<0:m[1]==='>'?n>0:m[1]==='<='?n<=0:n>=0;}return new RegExp('^'+c.replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?/g,'.')+'$','i').test(String(value??''));}
 export const FUNCTION_NAMES='SUM AVERAGE MIN MAX COUNT COUNTA COUNTIF COUNTIFS SUMIF SUMIFS AVERAGEIF IF IFS AND OR NOT IFERROR IFNA SWITCH LET LAMBDA INDEX MATCH XMATCH XLOOKUP VLOOKUP HLOOKUP FILTER SORT SORTBY UNIQUE SEQUENCE TRANSPOSE TAKE DROP CHOOSE OFFSET INDIRECT TEXT VALUE LEFT RIGHT MID LEN TRIM SUBSTITUTE REPLACE CONCAT TEXTJOIN FIND SEARCH UPPER LOWER PROPER ROUND ROUNDUP ROUNDDOWN INT MOD ABS POWER SQRT RAND RANDBETWEEN TODAY NOW DATE YEAR MONTH DAY EDATE EOMONTH NETWORKDAYS WORKDAY PMT PV FV NPV IRR STDEV.S STDEV.P VAR.S VAR.P MEDIAN LARGE SMALL RANK.EQ SUBTOTAL'.split(' ');
 const arities:Record<string,[number,number|null]>={IF:[2,3],IFS:[2,null],IFERROR:[2,2],IFNA:[2,2],NOT:[1,1],LET:[3,null],LAMBDA:[1,null],CHOOSE:[2,null],OFFSET:[3,5],INDIRECT:[1,2],RAND:[0,0],TODAY:[0,0],NOW:[0,0],SEQUENCE:[1,4],INDEX:[2,3],MATCH:[2,3],XMATCH:[2,4],XLOOKUP:[3,6],VLOOKUP:[3,4],HLOOKUP:[3,4],COUNTIF:[2,2],COUNTIFS:[2,null],SUMIF:[2,3],SUMIFS:[3,null],AVERAGEIF:[2,3],LEFT:[1,2],RIGHT:[1,2],MID:[3,3],ROUND:[2,2],ROUNDUP:[2,2],ROUNDDOWN:[2,2],DATE:[3,3],FILTER:[2,3],TEXT:[2,2]};
-export function createDefaultRegistry(){return new Map(FUNCTION_NAMES.map(name=>[name,{name,minArgs:arities[name]?.[0]??1,maxArgs:arities[name]?.[1]??null}]));}
+Object.assign(arities, {
+  SUM:[1,null], AVERAGE:[1,null], MIN:[1,null], MAX:[1,null], COUNT:[1,null], COUNTA:[1,null],
+  AND:[1,null], OR:[1,null], SWITCH:[3,null], SORT:[1,4], SORTBY:[2,null], UNIQUE:[1,3],
+  TRANSPOSE:[1,1], TAKE:[2,3], DROP:[2,3], VALUE:[1,1], LEN:[1,1], TRIM:[1,1],
+  SUBSTITUTE:[3,4], REPLACE:[4,4], CONCAT:[1,null], TEXTJOIN:[3,null], FIND:[2,3], SEARCH:[2,3],
+  UPPER:[1,1], LOWER:[1,1], PROPER:[1,1], INT:[1,1], MOD:[2,2], ABS:[1,1], POWER:[2,2],
+  SQRT:[1,1], RANDBETWEEN:[2,2], YEAR:[1,1], MONTH:[1,1], DAY:[1,1], EDATE:[2,2], EOMONTH:[2,2],
+  NETWORKDAYS:[2,3], WORKDAY:[2,3], PMT:[3,5], PV:[3,5], FV:[3,5], NPV:[2,null], IRR:[1,2],
+  "STDEV.S":[1,null], "STDEV.P":[1,null], "VAR.S":[1,null], "VAR.P":[1,null], MEDIAN:[1,null],
+  LARGE:[2,2], SMALL:[2,2], "RANK.EQ":[2,3], SUBTOTAL:[2,null],
+});
+
+export function createDefaultRegistry(){return new Map(FUNCTION_NAMES.map(name=>[name,{name,minArgs:arities[name]?.[0]??1,maxArgs:arities[name]?.[1] ?? null}]));}
 export function invoke(name:string,a:ComputedValue[],nowMs:number,random:()=>number):ComputedValue{
- const n=(i:number,d=0)=>a[i]===undefined?d:num(a[i]!);const s=(i:number)=>str(a[i]??null);const all=a.flatMap(x=>[...flat(x)]);const numbers=all.filter((x):x is number=>typeof x==='number');const sum=(ns:readonly number[])=>ns.reduce((x,y)=>x+y,0);const avg=(ns:readonly number[])=>ns.length?sum(ns)/ns.length:err('#DIV/0!');const firstError=all.find(isError);if(firstError&&name!=='COUNT'&&name!=='COUNTA')return firstError;
- const date=(serial:number)=>new Date(Date.UTC(1899,11,30)+(serial === 60 ? serial + 1 : serial)*86400000);const serial=(d:Date)=>d.getTime()/86400000+25569;
+ const n=(i:number,d=0)=>a[i]===undefined?d:num(a[i]!);const s=(i:number)=>str(a[i]??null);const all=a.flatMap(x=>[...flat(x)]);const numbers=all.filter((x):x is number=>typeof x==='number');const sum=(ns:readonly number[])=>ns.reduce((x,y)=>x+y,0);const avg=(ns:readonly number[])=>ns.length?sum(ns)/ns.length:err('#DIV/0!');const firstError=all.find(isError);if(firstError&&name!=='COUNT'&&name!=='COUNTA'&&name!=='XLOOKUP')return firstError;
+ const date=(serial:number)=>new Date(Date.UTC(1899,11,30)+(serial < 60 ? serial + 1 : serial)*86400000);const serial=(d:Date)=>{const value=d.getTime()/86400000+25569;return value<61?value-1:value;};
  switch(name){
- case 'SUM':return sum(numbers);case 'AVERAGE':return avg(numbers);case 'MIN':return numbers.length?Math.min(...numbers):0;case 'MAX':return numbers.length?Math.max(...numbers):0;case 'COUNT':return all.filter(x=>typeof x==='number'||typeof x==='boolean').length;case 'COUNTA':return all.filter(x=>x!==null).length;
+ case 'SUM':return sum(numbers);case 'AVERAGE':return avg(numbers);case 'MIN':return numbers.length?numbers.reduce((x,y)=>Math.min(x,y),Infinity):0;case 'MAX':return numbers.length?numbers.reduce((x,y)=>Math.max(x,y),-Infinity):0;case 'COUNT':return a.reduce<number>((total,value)=>total+(isArray(value)?value.values.filter(x=>typeof x==='number').length:typeof value==='number'||typeof value==='boolean'||typeof value==='string'&&value!==''&&Number.isFinite(Number(value))?1:0),0);case 'COUNTA':return all.filter(x=>x!==null).length;
  case 'AND':return all.every(x=>!!x);case 'OR':return all.some(x=>!!x);case 'NOT':return !n(0);
  case 'COUNTIF':case 'SUMIF':case 'AVERAGEIF':{const test=flat(a[0]!);const vals=flat(a[2]??a[0]!);const hits=test.map((x,i)=>criteria(x,a[1]!)?i:-1).filter(i=>i>=0);if(name==='COUNTIF')return hits.length;const ns=hits.map(i=>vals[i]).filter((x):x is number=>typeof x==='number');return name==='SUMIF'?sum(ns):avg(ns);}
  case 'COUNTIFS':case 'SUMIFS':{const offset=name==='SUMIFS'?1:0;if((a.length-offset)%2) return err();const sumRange=offset?flat(a[0]!):[];const ranges=a.slice(offset).filter((_,i)=>i%2===0).map(flat);if(!ranges.length||ranges.some(r=>r.length!==ranges[0]!.length)||offset&&sumRange.length!==ranges[0]!.length)return err();const ids=ranges[0]!.map((_,i)=>i).filter(i=>ranges.every((r,j)=>criteria(r[i]!,a[offset+j*2+1]!)));return offset?sum(ids.map(i=>sumRange[i]).filter((v): v is number=>typeof v==='number')):ids.length;}
@@ -31,22 +43,58 @@ export function invoke(name:string,a:ComputedValue[],nowMs:number,random:()=>num
  case 'TEXT':{const fmt=s(1);if(/yy|dd/i.test(fmt)){const d=date(n(0));return fmt.replace(/yyyy/gi,String(d.getUTCFullYear())).replace(/mm/gi,String(d.getUTCMonth()+1).padStart(2,'0')).replace(/dd/gi,String(d.getUTCDate()).padStart(2,'0'));}const digits=fmt.match(/\.([0#]+)/)?.[1]?.length??0;return (fmt.includes('$')?'$':'')+(n(0)*(fmt.includes('%')?100:1)).toLocaleString('en-US',{minimumFractionDigits:digits,maximumFractionDigits:digits,useGrouping:fmt.includes(',')})+(fmt.includes('%')?'%':'');}
  case 'TODAY':return Math.floor(nowMs/86400000)+25569;case 'NOW':return nowMs/86400000+25569;case 'DATE':return serial(new Date(Date.UTC(n(0)<1900?n(0)+1900:n(0),n(1)-1,n(2))));case 'YEAR':return n(0)===60?1900:date(n(0)).getUTCFullYear();case 'MONTH':return n(0)===60?2:date(n(0)).getUTCMonth()+1;case 'DAY':return n(0)===60?29:date(n(0)).getUTCDate();
  case 'EDATE':case 'EOMONTH':{const d=date(n(0));const day=d.getUTCDate();d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+n(1)+(name==='EOMONTH'?1:0));if(name==='EOMONTH')d.setUTCDate(0);else{const end=new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth()+1,0)).getUTCDate();d.setUTCDate(Math.min(day,end));}return serial(d);}
- case 'NETWORKDAYS':case 'WORKDAY':{const holidays=flat(a[2]??null);const working=(d:number)=>![0,6].includes(date(d).getUTCDay())&&!holidays.includes(d);let d=Math.trunc(n(0)),count=0;if(name==='WORKDAY'){let remaining=Math.abs(n(1));if(remaining>1000000)return err('#NUM!');while(remaining){d+=Math.sign(n(1));if(working(d))remaining--;}return d;}const end=Math.trunc(n(1)),direction=end>=d?1:-1;if(Math.abs(end-d)>1000000)return err('#NUM!');for(;direction>0?d<=end:d>=end;d+=direction)if(working(d))count+=direction;return count;}
+ case 'NETWORKDAYS':case 'WORKDAY':{const holidays=flat(a[2]??null);const working=(d:number)=>![0,6].includes(date(d).getUTCDay())&&!holidays.includes(d);let d=Math.trunc(n(0)),count=0;if(name==='WORKDAY'){let remaining=Math.abs(Math.trunc(n(1)));if(remaining>1000000)return err('#NUM!');while(remaining){d+=Math.sign(n(1));if(working(d))remaining--;}return d;}const end=Math.trunc(n(1)),direction=end>=d?1:-1;if(Math.abs(end-d)>1000000)return err('#NUM!');for(;direction>0?d<=end:d>=end;d+=direction)if(working(d))count+=direction;return count;}
  case 'CHOOSE':{const index=Math.trunc(n(0));return index<1||index>=a.length?err('#VALUE!'):a[index]!;}
- case 'MEDIAN':case 'LARGE':case 'SMALL':case 'RANK.EQ':{const ns=(name==='RANK.EQ'?flat(a[1]!):name==='MEDIAN'?numbers:flat(a[0]!)).filter((x):x is number=>typeof x==='number').sort((x,y)=>x-y);if(!ns.length)return err('#NUM!');if(name==='MEDIAN')return ns.length%2?ns[Math.floor(ns.length/2)]!: (ns[ns.length/2-1]!+ns[ns.length/2]!)/2;if(name==='RANK.EQ')return ns.includes(n(0))?1+ns.filter(x=>n(2)?x<n(0):x>n(0)).length:err('#N/A');const k=n(1);return k<1||k>ns.length?err('#NUM!'):ns[name==='SMALL'?k-1:ns.length-k]!;}
+ case 'MEDIAN':case 'LARGE':case 'SMALL':case 'RANK.EQ':{const ns=(name==='RANK.EQ'?flat(a[1]!):name==='MEDIAN'?numbers:flat(a[0]!)).filter((x):x is number=>typeof x==='number').sort((x,y)=>x-y);if(!ns.length)return err('#NUM!');if(name==='MEDIAN')return ns.length%2?ns[Math.floor(ns.length/2)]!: (ns[ns.length/2-1]!+ns[ns.length/2]!)/2;if(name==='RANK.EQ')return ns.includes(n(0))?1+ns.filter(x=>n(2)?x<n(0):x>n(0)).length:err('#N/A');const k=Math.trunc(n(1));return k<1||k>ns.length?err('#NUM!'):ns[name==='SMALL'?k-1:ns.length-k]!;}
  case 'VAR.S':case 'VAR.P':case 'STDEV.S':case 'STDEV.P':{const sample=name.endsWith('.S');if(numbers.length<1+Number(sample))return err('#DIV/0!');const mean=sum(numbers)/numbers.length;const v=sum(numbers.map(x=>(x-mean)**2))/(numbers.length-Number(sample));return name.startsWith('STDEV')?Math.sqrt(v):v;}
  case 'PMT':case 'PV':case 'FV':{const rate=n(0),periods=n(1),v=n(2),extra=n(3),type=n(4),factor=(1+rate)**periods,annuity=rate===0?periods:(factor-1)/rate*(1+rate*type);if(name==='PMT')return annuity===0?err('#DIV/0!'):-(v*factor+extra)/annuity;if(name==='PV')return -(v*annuity+extra)/factor;return -(extra*factor+v*annuity);}
  case 'NPV':return sum(a.slice(1).flatMap(flat).filter((x):x is number=>typeof x==='number').map((v,i)=>v/(1+n(0))**(i+1)));
  case 'IRR':{const flows=flat(a[0]!).filter((x):x is number=>typeof x==='number');if(!flows.some(x=>x<0)||!flows.some(x=>x>0))return err('#NUM!');let rate=n(1,.1);for(let i=0;i<100;i++){const f=sum(flows.map((v,j)=>v/(1+rate)**j));const d=sum(flows.map((v,j)=>-j*v/(1+rate)**(j+1)));const next=rate-f/d;if(!Number.isFinite(next)||next<=-1)return err('#NUM!');if(Math.abs(next-rate)<1e-10)return next;rate=next;}return err('#NUM!');}
- case 'SUBTOTAL':{const f=['','AVERAGE','COUNT','COUNTA','MAX','MIN','','STDEV.S','STDEV.P','SUM','VAR.S','VAR.P'][n(0)%100];return f?invoke(f,a.slice(1),nowMs,random):err();}
+ case 'SUBTOTAL':{const code=n(0);if(!Number.isInteger(code)||!(code>=1&&code<=11||code>=101&&code<=111))return err();if(code%100===6){const values=a.slice(1).flatMap(flat).filter((v):v is number=>typeof v==='number');return values.length?values.reduce((product,v)=>product*v,1):0;}const f=['','AVERAGE','COUNT','COUNTA','MAX','MIN','','STDEV.S','STDEV.P','SUM','VAR.S','VAR.P'][n(0)%100];return f?invoke(f,a.slice(1),nowMs,random):err();}
  case 'SEQUENCE':{const rows=n(0),cols=n(1,1);if(!Number.isInteger(rows)||!Number.isInteger(cols)||rows<1||cols<1||rows*cols>1000000)return err('#CALC!');return matrix(rows,cols,Array.from({length:rows*cols},(_,i)=>n(2,1)+i*n(3,1)));}
  case 'TRANSPOSE':{const x=ar(a[0]!);return matrix(x.cols,x.rows,Array.from({length:x.values.length},(_,i)=>x.values[(i%x.rows)*x.cols+Math.floor(i/x.rows)]!));}
  case 'INDEX':{const x=ar(a[0]!),r=n(1),c=n(2,1);return r<1||c<1||r>x.rows||c>x.cols?err('#REF!'):x.values[(r-1)*x.cols+c-1]!;}
- case 'MATCH':case 'XMATCH':case 'XLOOKUP':{const vals=flat(a[1]!);const mode=n(name==='XLOOKUP'?4:2,name==='MATCH'?1:0);const reverse=n(name==='XLOOKUP'?5:3,1)<0;const ids=Array.from({length:vals.length},(_,i)=>i);if(reverse)ids.reverse();let index=ids.find(i=>compare(vals[i]!,scalar(a[0]!))===0);if(index===undefined&&mode!==0){const candidates=ids.filter(i=>mode===-1?compare(vals[i]!,scalar(a[0]!))<0:compare(vals[i]!,scalar(a[0]!))<=0);index=candidates.at(-1);}if(index===undefined)return name==='XLOOKUP'?a[3]??err('#N/A'):err('#N/A');return name==='XLOOKUP'?flat(a[2]!)[index]??err('#REF!'):index+1;}
+ case 'MATCH':case 'XMATCH':case 'XLOOKUP':{
+  const vals=flat(a[1]!), target=scalar(a[0]!);if(isError(target))return target;const lookupError=vals.find(isError);if(lookupError)return lookupError;
+  const mode=n(name==='XLOOKUP'?4:2,name==='MATCH'?1:0), search=n(name==='XLOOKUP'?5:3,1);
+  if (!(name==='MATCH'?[-1,0,1]:[-1,0,1,2]).includes(mode)||![1,-1,2,-2].includes(search)) return err();
+  const ids=Array.from({length:vals.length},(_,i)=>i);if(search<0)ids.reverse();
+  let index=ids.find(i=>mode===2?criteria(vals[i]!,a[0]!):compare(vals[i]!,target)===0);
+  if(index===undefined&&mode!==0&&mode!==2){
+    const smaller=name==='MATCH'?mode===1:mode===-1;
+    const candidates=ids.filter(i=>smaller?compare(vals[i]!,target)<0:compare(vals[i]!,target)>0);
+    candidates.sort((i,j)=>compare(vals[i]!,vals[j]!)*(smaller?-1:1)); index=candidates[0];
+  }
+  if(index===undefined)return name==='XLOOKUP'?a[3]??err('#N/A'):err('#N/A');
+  if(name!=='XLOOKUP')return index+1;
+  const result=ar(a[2]!), lookup=ar(a[1]!);
+  if(lookup.cols===1&&result.rows===lookup.rows){const values=result.values.slice(index*result.cols,(index+1)*result.cols);return result.cols===1?values[0]!:matrix(1,result.cols,values);}
+  if(lookup.rows===1&&result.cols===lookup.cols){const values=Array.from({length:result.rows},(_,r)=>result.values[r*result.cols+index!]!);return result.rows===1?values[0]!:matrix(result.rows,1,values);}
+  return err('#VALUE!');
+ }
+
  case 'VLOOKUP':case 'HLOOKUP':{const x=ar(a[1]!),vertical=name==='VLOOKUP',count=vertical?x.rows:x.cols,idx=n(2)-1;if(idx<0||idx>=(vertical?x.cols:x.rows))return err('#REF!');let found=-1;for(let i=0;i<count;i++){const v=x.values[vertical?i*x.cols:i]!;const c=compare(v,scalar(a[0]!));if(c===0){found=i;break;}if(n(3,1)&&c<0)found=i;}return found<0?err('#N/A'):x.values[vertical?found*x.cols+idx:idx*x.cols+found]!;}
  case 'FILTER':{const x=ar(a[0]!),include=flat(a[1]!);if(include.length!==x.rows)return err();const vals:Scalar[]=[];for(let r=0;r<x.rows;r++)if(include[r])vals.push(...x.values.slice(r*x.cols,(r+1)*x.cols));return vals.length?matrix(vals.length/x.cols,x.cols,vals):a[2]??err('#CALC!');}
  case 'TAKE':case 'DROP':{const x=ar(a[0]!),rows=n(1),cols=n(2,x.cols);if(name==='TAKE'&&(rows===0||cols===0))return err('#CALC!');const select=(length:number,k:number)=>Array.from({length},(_,i)=>i).filter(i=>name==='TAKE'?k>=0?i<k:i>=length+k:k>=0?i>=k:i<length+k);const rr=select(x.rows,rows),cc=a[2]===undefined?Array.from({length:x.cols},(_,i)=>i):select(x.cols,cols);return matrix(rr.length,cc.length,rr.flatMap(r=>cc.map(c=>x.values[r*x.cols+c]!)));}
- case 'SORT':case 'SORTBY':case 'UNIQUE':{const x=ar(a[0]!);let rows=Array.from({length:x.rows},(_,i)=>({i,v:x.values.slice(i*x.cols,(i+1)*x.cols)}));if(name==='UNIQUE'){const keys=rows.map(r=>JSON.stringify(r.v));rows=rows.filter((_,i)=>n(2)?keys.filter(k=>k===keys[i]).length===1:keys.indexOf(keys[i]!)===i);}else{const keys=name==='SORTBY'?flat(a[1]!):null;if(keys&&keys.length!==x.rows)return err('#VALUE!');const direction=n(2,1);rows.sort((u,v)=>compare(keys?keys[u.i]!:u.v[n(1,1)-1]!,keys?keys[v.i]!:v.v[n(1,1)-1]!)*direction);}return matrix(rows.length,x.cols,rows.flatMap(r=>r.v));}
+ case 'SORT':case 'SORTBY':case 'UNIQUE':{
+  let x=ar(a[0]!);const byColumn=name==='SORT'?!!n(3):name==='UNIQUE'?!!n(1):false;
+  if(byColumn)x=ar(invoke('TRANSPOSE',[x],nowMs,random));
+  let rows=Array.from({length:x.rows},(_,i)=>({i,v:x.values.slice(i*x.cols,(i+1)*x.cols)}));
+  if(name==='UNIQUE'){
+    const keys=rows.map(r=>JSON.stringify(r.v.map(v=>typeof v==='string'?v.toLowerCase():v))),counts=new Map<string,number>();
+    for(const key of keys)counts.set(key,(counts.get(key)??0)+1);
+    const seen=new Set<string>();rows=rows.filter((_,i)=>{const key=keys[i]!;if(n(2))return counts.get(key)===1;if(seen.has(key))return false;seen.add(key);return true;});
+  }else if(name==='SORTBY'){
+    const specs:{keys:readonly Scalar[];direction:number}[]=[];
+    for(let i=1;i<a.length;i+=2){const keys=flat(a[i]!),direction=n(i+1,1);if(keys.length!==x.rows||![1,-1].includes(direction))return err();specs.push({keys,direction});}
+    rows.sort((u,v)=>{for(const spec of specs){const delta=compare(spec.keys[u.i]!,spec.keys[v.i]!)*spec.direction;if(delta)return delta;}return 0;});
+  }else{
+    const column=n(1,1)-1,direction=n(2,1);if(!Number.isInteger(column)||column<0||column>=x.cols||![1,-1].includes(direction))return err();
+    rows.sort((u,v)=>compare(u.v[column]!,v.v[column]!)*direction);
+  }
+  const result=matrix(rows.length,x.cols,rows.flatMap(r=>r.v));return byColumn?invoke('TRANSPOSE',[result],nowMs,random):result;
+ }
+
  default:return err('#NAME?');
  }
 }

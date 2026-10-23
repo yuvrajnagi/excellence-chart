@@ -1,0 +1,8 @@
+[
+  {
+    "code": "LOSSY_CONVERSION",
+    "severity": "warning",
+    "feature": "advanced objects",
+    "message": "Pivots and advanced worksheet metadata survive OpenExcel round trips through a private extension. Native charts use basic axes; advanced axis styling and secondary axes are not emitted."
+  }
+]

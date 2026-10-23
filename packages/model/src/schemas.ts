@@ -46,7 +46,7 @@ const border = z.strictObject({
 export const styleSchema = z.strictObject({
   font: z.strictObject({
     family: text.optional(), size: finite.min(6).max(96).optional(),
-    bold: z.boolean().optional(), italic: z.boolean().optional(), underline: z.boolean().optional(), color: color.optional(),
+    bold: z.boolean().optional(), italic: z.boolean().optional(), underline: z.boolean().optional(), strikethrough: z.boolean().optional(), color: color.optional(),
   }).optional(),
   fill: color.optional(),
   borders: z.strictObject({ top: border.optional(), right: border.optional(), bottom: border.optional(), left: border.optional() }).optional(),
@@ -187,15 +187,22 @@ const workbookShape = z.strictObject({
 
 /** JSON preflight runs before Zod so inherited fields, accessors and explicit undefined cannot be lost by parsing. */
 function wireError(input: unknown): string | undefined {
-  const stack: unknown[] = [input];
-  const seen = new Set<object>();
+  const stack: { value: unknown; exit: boolean }[] = [{ value: input, exit: false }];
+  const active = new Set<object>();
+  const checked = new Set<object>();
   while (stack.length) {
-    const value = stack.pop();
+    const frame = stack.pop()!;
+    const value = frame.value;
+    if (frame.exit) { active.delete(value as object); checked.add(value as object); continue; }
     if (value === null || typeof value === "string" || typeof value === "boolean"
       || (typeof value === "number" && Number.isFinite(value))) continue;
     if (typeof value !== "object") return "Expected JSON-compatible values";
-    if (seen.has(value)) return "Repeated or cyclic object reference";
-    seen.add(value);
+    // Internal immutable transactions intentionally share addresses and style objects.
+    // Reject cycles on the current path, while allowing already validated DAG nodes.
+    if (active.has(value)) return "Cyclic object reference";
+    if (checked.has(value)) continue;
+    active.add(value);
+    stack.push({ value, exit: true });
     const proto: unknown = Object.getPrototypeOf(value);
     if (Array.isArray(value) ? proto !== Array.prototype : proto !== Object.prototype && proto !== null)
       return "Custom prototypes are forbidden";
@@ -204,7 +211,7 @@ function wireError(input: unknown): string | undefined {
       if (typeof key !== "string" || ["__proto__", "constructor", "prototype"].includes(key)) return "Prototype keys are forbidden";
       const descriptor = Object.getOwnPropertyDescriptor(value, key);
       if (!descriptor || !("value" in descriptor) || !descriptor.enumerable) return "Accessors and nonenumerable values are forbidden";
-      stack.push(descriptor.value);
+      stack.push({ value: descriptor.value, exit: false });
     }
     if (Array.isArray(value) && Object.keys(value).length !== value.length) return "Sparse arrays are forbidden";
   }

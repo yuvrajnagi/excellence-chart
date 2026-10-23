@@ -1,0 +1,102 @@
+{
+  "timestamp": "2026-10-23T08:03:43.757Z",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "release": "6.8.0-1064-azure",
+    "cpu": "AMD EPYC 7763 64-Core Processor",
+    "logicalCpus": 4,
+    "totalMemoryBytes": 16770494464
+  },
+  "notes": [
+    "Single process, one measured run per operation; no statistical confidence claimed.",
+    "Heap delta includes allocations before garbage collection. RSS is process peak-to-date, not workbook-only memory.",
+    "UI scrolling measured separately by Playwright; these Node timings do not establish browser responsiveness."
+  ],
+  "samples": [
+    {
+      "name": "100K formulas: construct 200K authored cells",
+      "ms": 231.27869499999997,
+      "heapDeltaBytes": 43573368,
+      "rssBytes": 207421440
+    },
+    {
+      "name": "100K formulas: cold recalculate",
+      "ms": 1552.0238749999999,
+      "heapDeltaBytes": 148142160,
+      "rssBytes": 484769792
+    },
+    {
+      "name": "100K formulas: update one input and recalculate",
+      "ms": 1.0235999999999876,
+      "heapDeltaBytes": 247784,
+      "rssBytes": 484900864
+    },
+    {
+      "name": "100K formulas: read 100K cached results",
+      "ms": 55.9569919999999,
+      "heapDeltaBytes": 30170376,
+      "rssBytes": 485031936
+    },
+    {
+      "name": "1M cells: construct sparse tiles",
+      "ms": 1234.3577380000002,
+      "heapDeltaBytes": 111472520,
+      "rssBytes": 635502592
+    },
+    {
+      "name": "1M cells: serialize",
+      "ms": 546.3746259999998,
+      "heapDeltaBytes": 68173072,
+      "rssBytes": 687501312
+    },
+    {
+      "name": "1M cells: JSON bytes",
+      "bytes": 51786536
+    },
+    {
+      "name": "1M cells: parse JSON and validate schema",
+      "ms": 16117.800633,
+      "heapDeltaBytes": 143958496,
+      "rssBytes": 837255168
+    },
+    {
+      "name": "1M cells: initialize calculation engine",
+      "ms": 2301.4712579999978,
+      "heapDeltaBytes": 29414424,
+      "rssBytes": 838828032
+    },
+    {
+      "name": "XLSX export: challenge workbook (6 sheets)",
+      "ms": 143.6892919999991,
+      "heapDeltaBytes": 5440696,
+      "rssBytes": 851542016
+    },
+    {
+      "name": "XLSX challenge workbook: bytes",
+      "bytes": 18435
+    },
+    {
+      "name": "XLSX parse: challenge workbook",
+      "ms": 82.15670299999692,
+      "heapDeltaBytes": 6123960,
+      "rssBytes": 858488832
+    },
+    {
+      "name": "XLSX export: 10K cells (formulas + values)",
+      "ms": 987.3225669999993,
+      "heapDeltaBytes": 31795944,
+      "rssBytes": 932364288
+    },
+    {
+      "name": "XLSX 10K cells: bytes",
+      "bytes": 250305
+    },
+    {
+      "name": "XLSX parse: 10K cells",
+      "ms": 1124.6923719999977,
+      "heapDeltaBytes": 4564264,
+      "rssBytes": 951037952
+    }
+  ]
+}

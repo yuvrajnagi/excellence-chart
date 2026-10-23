@@ -1,0 +1,13 @@
+node_modules
+.git
+.data
+.openexcel
+artifacts
+examples
+**/dist
+**/dist-types
+**/*.tsbuildinfo
+.env
+*.pem
+playwright-report
+test-results

@@ -41,7 +41,10 @@ export function styleToCSS(style: CellStyle = {}): Record<string, string | numbe
   if(style.font?.size) css['fontSize'] = `${style.font.size}pt`;
   if(style.font?.bold) css['fontWeight'] = 'bold';
   if(style.font?.italic) css['fontStyle'] = 'italic';
-  if(style.font?.underline) css['textDecoration'] = 'underline';
+  const decorations: string[] = [];
+  if(style.font?.underline) decorations.push('underline');
+  if(style.font?.strikethrough) decorations.push('line-through');
+  if(decorations.length) css['textDecoration'] = decorations.join(' ');
   if(style.font?.color) css['color'] = style.font.color;
   if(style.fill) css['backgroundColor'] = style.fill;
   if(style.horizontal && style.horizontal !== 'general') css['textAlign'] = style.horizontal;

@@ -11,3 +11,12 @@ describe('data operations',()=>{
  it('solves goals and reports flat functions',()=>{expect(goalSeek(x=>x*x,25,3)).toMatchObject({converged:true});expect(goalSeek(x=>x*x,25,3).value).toBeCloseTo(5);expect(goalSeek(()=>2,3).converged).toBe(false);});
  it('handles aggregate blanks and inferred series',()=>{expect(aggregate([null,2,4],'average')).toBe(3);expect(inferSeries([{input:{kind:'value',value:2}},{input:{kind:'value',value:4}}],3).map(c=>c.input)).toEqual([6,8,10].map(value=>({kind:'value',value})));});
 });
+
+import {refreshPivot} from '../src/index.js';
+it('pivot refresh rejects source overlap and materializes aggregate output',()=>{
+ const f=fixture(['Sales',10,20]);
+ const pivot={id:createId('object'),name:'Pivot1',source:f.range,destination:{sheetId:f.range.sheetId,row:0,col:3},rows:[],columns:[],values:[{offset:0,aggregate:'sum' as const,label:'Sales'}],filters:[],rowTotals:false,columnTotals:false};
+ const patches=refreshPivot(f.workbook,pivot,f.reader);
+ expect(patches.some(p=>p.kind==='cell'&&p.cell?.input.kind==='value'&&p.cell.input.value===30)).toBe(true);
+ expect(()=>refreshPivot(f.workbook,{...pivot,destination:{sheetId:f.range.sheetId,row:0,col:0}},f.reader)).toThrow('overlaps its source');
+});

@@ -3,8 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24.0.0" },
-  "workspaces": ["packages/*", "apps/*"],
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "dev": "bash scripts/run.sh dev",
     "test": "bash scripts/run.sh test",
@@ -12,7 +17,8 @@
     "build": "bash scripts/run.sh build",
     "test:e2e": "bash scripts/run.sh test:e2e",
     "benchmark": "bash scripts/run.sh benchmark",
-    "samples": "bash scripts/run.sh samples"
+    "samples": "bash scripts/run.sh samples",
+    "start": "node apps/server/dist/index.js"
   },
   "dependencies": {
     "exceljs": "4.4.0",
@@ -35,5 +41,9 @@
     "vite": "7.3.7",
     "vitest": "5.0.5"
   },
-  "overrides": { "exceljs": { "uuid": "11.1.1" } }
+  "overrides": {
+    "exceljs": {
+      "uuid": "11.1.1"
+    }
+  }
 }

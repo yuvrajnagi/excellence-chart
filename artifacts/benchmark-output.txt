@@ -1,0 +1,70 @@
+{
+  "timestamp": "2026-10-23T05:48:18.997Z",
+  "environment": {
+    "node": "v24.21.0",
+    "platform": "linux",
+    "release": "6.8.0-1064-azure",
+    "cpu": "AMD EPYC 7763 64-Core Processor",
+    "logicalCpus": 4,
+    "totalMemoryBytes": 16770494464
+  },
+  "notes": [
+    "Single process, one measured run per operation; no statistical confidence claimed.",
+    "Heap delta includes allocations before garbage collection. RSS is process peak-to-date, not workbook-only memory.",
+    "UI scrolling measured separately by Playwright; these Node timings do not establish browser responsiveness."
+  ],
+  "samples": [
+    {
+      "name": "100K formulas: construct 200K authored cells",
+      "ms": 184.83623699999998,
+      "heapDeltaBytes": 42109096,
+      "rssBytes": 170688512
+    },
+    {
+      "name": "100K formulas: cold recalculate",
+      "ms": 1242.375578,
+      "heapDeltaBytes": 146775416,
+      "rssBytes": 461615104
+    },
+    {
+      "name": "100K formulas: update one input and recalculate",
+      "ms": 0.9331720000000132,
+      "heapDeltaBytes": 247512,
+      "rssBytes": 461746176
+    },
+    {
+      "name": "100K formulas: read 100K cached results",
+      "ms": 54.50171599999976,
+      "heapDeltaBytes": -27567480,
+      "rssBytes": 467906560
+    },
+    {
+      "name": "1M cells: construct sparse tiles",
+      "ms": 755.5347059999999,
+      "heapDeltaBytes": 133511832,
+      "rssBytes": 619425792
+    },
+    {
+      "name": "1M cells: serialize",
+      "ms": 430.79909,
+      "heapDeltaBytes": 68173072,
+      "rssBytes": 671408128
+    },
+    {
+      "name": "1M cells: JSON bytes",
+      "bytes": 51786536
+    },
+    {
+      "name": "1M cells: parse JSON and validate schema",
+      "ms": 7646.4595580000005,
+      "heapDeltaBytes": 147550352,
+      "rssBytes": 810782720
+    },
+    {
+      "name": "1M cells: initialize calculation engine",
+      "ms": 1219.2359829999987,
+      "heapDeltaBytes": 29693800,
+      "rssBytes": 813535232
+    }
+  ]
+}

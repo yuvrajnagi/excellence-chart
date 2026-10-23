@@ -62,6 +62,7 @@ export interface ListWorkbooksResponse {
 
 export interface SaveWorkbookRequest {
   readonly saveId: string;
+  readonly storageVersion?: number;
   readonly workbook: Workbook;
 }
 
@@ -407,7 +408,7 @@ export class ApiClient {
 
   async saveWorkbook(
     id: string,
-    request: SaveWorkbookRequest | { workbook: Workbook; saveId?: string }
+    request: SaveWorkbookRequest | { workbook: Workbook; saveId?: string; storageVersion?: number }
   ): Promise<SaveWorkbookResponse> {
     const payload: SaveWorkbookRequest = {
       saveId: request.saveId ?? generateUuid(),
@@ -416,7 +417,7 @@ export class ApiClient {
 
     return this.request<SaveWorkbookResponse>(`/workbooks/${encodeURIComponent(id)}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'If-Match': String(request.storageVersion ?? 0) },
       body: JSON.stringify(payload),
     });
   }
@@ -503,7 +504,7 @@ export const getWorkbook = (id: string): Promise<WorkbookEnvelope> =>
 
 export const saveWorkbook = (
   id: string,
-  request: SaveWorkbookRequest | { workbook: Workbook; saveId?: string }
+  request: SaveWorkbookRequest | { workbook: Workbook; saveId?: string; storageVersion?: number }
 ): Promise<SaveWorkbookResponse> => defaultApiClient.saveWorkbook(id, request);
 
 export const deleteWorkbook = (id: string): Promise<{ ok: boolean }> =>

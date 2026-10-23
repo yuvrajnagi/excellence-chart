@@ -10,10 +10,16 @@ export function readRows(range: RangeRef, reader: ValueReader): Scalar[][] {
   checkRange(range);
   return Array.from({length:range.bottom-range.top+1},(_,i)=>Array.from({length:range.right-range.left+1},(_,j)=>reader.value({sheetId:range.sheetId,row:range.top+i,col:range.left+j})));
 }
-function compare(a: Scalar,b: Scalar): number {
-  if(a===b)return 0; if(a===null)return 1;if(b===null)return -1;
-  if(typeof a==='number'&&typeof b==='number')return a-b;
-  return String(a).localeCompare(String(b), 'en', {numeric:true,sensitivity:'base'});
+function compare(a: Scalar, b: Scalar): number {
+  const rank = (v: Scalar): number => v === null ? 4 : typeof v === "number" ? 0
+    : typeof v === "string" ? 1 : typeof v === "boolean" ? 2 : 3;
+  const ar = rank(a), br = rank(b);
+  if (ar !== br) return ar - br;
+  if (typeof a === "number" && typeof b === "number") return a - b;
+  if (typeof a === "string" && typeof b === "string") return a.localeCompare(b, 'en', { numeric: true, sensitivity: 'base' });
+  if (typeof a === "boolean" && typeof b === "boolean") return Number(a) - Number(b);
+  if (a !== null && b !== null && typeof a === "object" && typeof b === "object") return a.code.localeCompare(b.code, 'en');
+  return 0;
 }
 /** Sorting moves whole authored cells including formatting; calculated values are comparison keys. */
 export function sortRange(workbook: Workbook, range: RangeRef, keys: readonly SortKey[], reader: ValueReader): Patch[] {
@@ -71,6 +77,7 @@ export function pivotRows(rows: readonly (readonly Scalar[])[], rowOffsets: read
     const r=rowOffsets.map(i=>row[i]??null),c=columnOffsets.map(i=>row[i]??null);const rk=JSON.stringify(r),ck=JSON.stringify(c);
     rowKeys.set(rk,r);colKeys.set(ck,c);const key=JSON.stringify([rk,ck]);const bucket=groups.get(key)??[];bucket.push(row[valueOffset]??null);groups.set(key,bucket);
   }
+  if(!colKeys.size)colKeys.set('[]',[]);
   const cols=[...colKeys.keys()];const output:Scalar[][]=[[...rowOffsets.map((_,i)=>`Row ${i+1}`),...cols.map(k=>(colKeys.get(k)??[]).join(' / ')||method)]];
   for(const [rk,label]of rowKeys)output.push([...label,...cols.map(ck=>aggregate(groups.get(JSON.stringify([rk,ck]))??[],method))]);
   return output;
@@ -97,4 +104,50 @@ export function inferSeries(cells:readonly Cell[],count:number):Cell[] {
     return Array.from({length:count},(_,i)=>({input:{kind:'value',value:last+step*(i+1)}}));
   }
   return Array.from({length:count},(_,i)=>cells[i%cells.length]??{input:{kind:'value',value:null}});
+}
+
+/** Refresh only a pivot's recorded output; reject overlapping authored data before generating edits. */
+export function refreshPivot(workbook:Workbook, definition:import('@openexcel/model').PivotDefinition, reader:ValueReader):Patch[] {
+  const sheet=workbook.sheets[definition.destination.sheetId];
+  if(!sheet)throw Error('Pivot destination sheet does not exist');
+  if(definition.values.length!==1)throw Error('This pivot renderer supports one value field per pivot');
+  const field=definition.values[0]!;
+  const source=readRows(definition.source,reader);const headers=source.shift()??[];
+  const rows=source.filter(row=>definition.filters.every(f=>matchesFilter(row[f.offset]??null,f.predicate)));
+  const matrix=pivotRows(rows,definition.rows,definition.columns,field.offset,field.aggregate);
+  const dimensionCount=definition.rows.length;
+  matrix[0]!.splice(0,dimensionCount,...definition.rows.map(offset=>headers[offset]??`Row ${offset+1}`));
+  if(definition.rowTotals){
+    matrix[0]!.push('Grand Total');
+    for(let i=1;i<matrix.length;i++){
+      const label=matrix[i]!.slice(0,dimensionCount);
+      const bucket=rows.filter(row=>definition.rows.every((offset,j)=>row[offset]===label[j]));
+      matrix[i]!.push(aggregate(bucket.map(row=>row[field.offset]??null),field.aggregate));
+    }
+  }
+  if(definition.columnTotals){
+    const columnLabels=[...new Map(rows.map(row=>{const key=definition.columns.map(i=>row[i]??null);return [JSON.stringify(key),key] as const;})).values()];
+    const total:Scalar[]=[...definition.rows.map((_,i)=>i===0?'Grand Total':'')];
+    for(const label of columnLabels){const bucket=rows.filter(row=>definition.columns.every((offset,j)=>(row[offset]??null)===label[j]));total.push(aggregate(bucket.map(row=>row[field.offset]??null),field.aggregate));}
+    if(definition.rowTotals)total.push(aggregate(rows.map(row=>row[field.offset]??null),field.aggregate));
+    matrix.push(total);
+  }
+  const output:RangeRef={sheetId:sheet.id,top:definition.destination.row,left:definition.destination.col,bottom:definition.destination.row+matrix.length-1,right:definition.destination.col+(matrix[0]?.length??1)-1};
+  checkRange(output);
+  if(output.bottom>=1048576||output.right>=16384)throw Error('Pivot exceeds worksheet bounds');
+  const intersects=(a:RangeRef,b:RangeRef)=>a.sheetId===b.sheetId&&a.top<=b.bottom&&a.bottom>=b.top&&a.left<=b.right&&a.right>=b.left;
+  const inside=(range:RangeRef|undefined,row:number,col:number)=>range?.sheetId===sheet.id&&row>=range.top&&row<=range.bottom&&col>=range.left&&col<=range.right;
+  if(intersects(output,definition.source))throw Error('Pivot output overlaps its source');
+  if(sheet.properties.merges.some(m=>intersects(output,{...m,sheetId:sheet.id})))throw Error('Pivot output overlaps merged cells');
+  if(sheet.properties.pivots.some(p=>p.id!==definition.id&&p.output&&intersects(output,p.output)))throw Error('Pivot output overlaps another pivot');
+  for(let row=output.top;row<=output.bottom;row++)for(let col=output.left;col<=output.right;col++){
+    const cell=getCell(workbook,{sheetId:sheet.id,row,col});
+    if(cell&&!inside(definition.output,row,col)&&(cell.input.kind==='formula'||cell.input.value!==null))throw Error('Pivot output would overwrite existing cells');
+  }
+  const patches:Patch[]=[];
+  if(definition.output){checkRange(definition.output);for(let row=definition.output.top;row<=definition.output.bottom;row++)for(let col=definition.output.left;col<=definition.output.right;col++)patches.push({kind:'cell',at:{sheetId:definition.output.sheetId,row,col},cell:null});}
+  matrix.forEach((row,i)=>row.forEach((value,j)=>patches.push({kind:'cell',at:{sheetId:sheet.id,row:output.top+i,col:output.left+j},cell:{input:{kind:'value',value}}})));
+  const refreshed={...definition,output,refreshedAtRevision:workbook.revision+1};
+  patches.push({kind:'sheetProperties',sheetId:sheet.id,properties:{...sheet.properties,pivots:[...sheet.properties.pivots.filter(p=>p.id!==definition.id),refreshed]}});
+  return patches;
 }

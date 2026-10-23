@@ -86,7 +86,7 @@ export interface CellStyle {
   readonly font?: {
     readonly family?: string; readonly size?: number;
     readonly bold?: boolean; readonly italic?: boolean;
-    readonly underline?: boolean; readonly color?: string;
+    readonly underline?: boolean; readonly strikethrough?: boolean; readonly color?: string;
   };
   readonly fill?: string;
   readonly borders?: {

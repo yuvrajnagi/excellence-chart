@@ -1,0 +1,17 @@
+diff --git a/apps/server/src/app.ts b/apps/server/src/app.ts
+index e06f23e..c7d24ab 100644
+--- a/apps/server/src/app.ts
++++ b/apps/server/src/app.ts
+@@ -31,3 +31,3 @@ export function createApp(store:WorkbookStore,staticDir=resolve('apps/web/dist')
+     const data=unwrap(parseCreateWorkbookRequest(await jsonBody(req)));if(data.name.length>255)throw new HttpError(400,'INVALID_INPUT','Name too long');
+-    const workbook=data.kind==='blank'?createWorkbook({id:createId('workbook'),sheetId:createId('sheet'),name:data.name,timestamp:new Date().toISOString()}):{...data.workbook,id:createId('workbook'),properties:{...data.workbook.properties,name:data.name}};
++    const workbook=data.kind==='blank'?createWorkbook({id:createId('workbook'),sheetId:createId('sheet'),name:data.name,timestamp:new Date().toISOString()}):{...data.workbook,id:data.workbook.id||createId('workbook'),properties:{...data.workbook.properties,name:data.name}};
+     return json(res,201,store.create(workbook));
+diff --git a/apps/web/src/App.tsx b/apps/web/src/App.tsx
+index 8e45f1b..1b6379c 100644
+--- a/apps/web/src/App.tsx
++++ b/apps/web/src/App.tsx
+@@ -52,6 +52,14 @@ export function App(){
+   const save=async()=>{const snapshot=current.current;const task=saveQueue.current.then(async()=>{if(savedRevision.current===snapshot.revision&&version.current)return;setStatus('Saving…');const response=version.current?await api.saveWorkbook(snapshot.id,{workbook:snapshot,storageVersion:version.current}):await api.createWorkbook({kind:'snapshot',workbook:snapshot,name:snapshot.properties.name});version.current=response.storageVersion;savedRevision.current=snapshot.revision;localStorage.setItem('openexcel-last',snapshot.id);setStatus('Saved');});saveQueue.current=task.catch(()=>{});return task;};
++  // If createWorkbook returns an envelope with the stored workbook, adopt its assigned ID and snapshot
++  // to ensure local state and localStorage are always in sync with server persistence.
