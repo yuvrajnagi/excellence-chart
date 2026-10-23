@@ -58,3 +58,78 @@ Comprehensive test suites (unit, integration, e2e with Playwright). A test workb
 ### Documentation
 - [ ] README documents installation, startup, and available commands
 - [ ] An honest status report lists what is implemented vs. incomplete
+
+
+## 2026-10-23T19:00:46Z
+
+Convert OpenExcel into a high-performance spreadsheet system powered by a Rust core engine that compiles to WebAssembly (WASM) for the web client and bundles natively for Desktop, maintaining full Excel compatibility, virtualized editing, and persistent storage.
+
+Working directory: /workspaces/excellence-chart
+Integrity mode: development
+
+## Requirements
+
+### R1. Rust Core Engine & Calculations
+Implement a Rust core engine that handles spreadsheet data structures (sparse cell grids, coordinate mapping), formula parsing (Pratt parser, AST, precedence), dependency graph tracking with cycle detection (`#CIRC!`), dynamic array spill mechanics (`#SPILL!`), and an Excel-compatible function library implementing all 88 standard spreadsheet functions.
+
+### R2. Dual-Target Compilation: WebAssembly and Native Desktop
+The Rust core must compile to `wasm32-unknown-unknown` with TypeScript/JS bindings for execution in Web Workers, as well as compile natively as a native desktop application (using Tauri or desktop shell) with local file and SQLite persistence.
+
+### R3. Integrated Spreadsheet UI & Feature Parity
+Integrate the Rust engine with the spreadsheet interface to support:
+- Virtualized viewport rendering across 1,048,576 rows x 16,384 columns with smooth scrolling and responsive editing.
+- Active-cell selection, multi-cell ranges, fill handle autofill with series inference, and undo/redo.
+- Complete cell styling, fonts, alignments, borders, and conditional formatting.
+- Interactive charting (9 chart types) reacting dynamically to cell updates.
+- Data tools: multi-column sorting, AutoFilter, validation dropdowns, tables, and pivot tables.
+- Lossless XLSX import/export and RFC 4180 CSV/TSV handling.
+
+### R4. Automated Testing and Performance Benchmarks
+Establish end-to-end verification and reproducible benchmarks:
+- Unit and integration tests for all 88 formula functions under native Rust and WASM targets.
+- Playwright E2E browser tests exercising data entry, formula recalculation, file round-trips, and persistence.
+- Automated benchmarks measuring responsiveness and incremental recalculation throughput on 100,000+ dependent cells.
+
+## Acceptance Criteria
+
+### Engine Verification & Function Parity
+- [ ] `cargo test` executes and passes for all core data structures, formula parser, dependency graph, cycle detection, and formula library functions.
+- [ ] The formula engine correctly calculates all 88 Excel functions with error propagation and edge cases matching test assertions.
+- [ ] Circular references return `#CIRC!` without hanging or crashing the process.
+- [ ] Dynamic array formulas spill across neighboring cells and return `#SPILL!` on collision.
+
+### WASM & Desktop Target Delivery
+- [ ] The Rust core compiles to WebAssembly (`wasm-pack build` or `cargo build --target wasm32`) generating type-safe bindings loaded by the web worker.
+- [ ] The web application runs the WASM engine in the browser without main-thread blocking during formula recalculation.
+- [ ] The native desktop application compiles and launches successfully, allowing local workbook creation, editing, and file saving.
+
+### Spreadsheet Interactivity & E2E Validation
+- [ ] Playwright E2E suite passes against the integrated application, verifying cell editing, formula bar synchronization, copy/paste, and sheet operations.
+- [ ] XLSX files import and export with preserved formulas, cell values, and formats.
+- [ ] Real benchmarks demonstrate sub-second recalculation performance on workbooks containing at least 100,000 formula cells.
+
+
+## 2026-10-23T19:07:44Z
+
+USER DIRECTIVE: Separate the UI agent and the testing/benchmarks agent into distinct dedicated agents. 
+
+Do not combine UI integration with testing or benchmarks in the same agent. 
+- The UI agent must focus exclusively on spreadsheet UI capabilities (virtualized grid, ribbon toolbar, formula bar, styling, charts, data tool dialogs, and WASM worker UI bindings).
+- A separate dedicated Testing & Benchmarks agent must handle the test suites, Playwright E2E validation, and 100k+ cell recalculation benchmark harness.
+
+Please relay this directive immediately to the orchestrator (f08a81b5-fe5a-4394-ac77-1f2fcfea98c3) to update the execution plan and spawn separate dedicated agents for UI and Testing/Benchmarks.
+
+
+## 2026-10-23T19:12:18Z
+
+URGENT USER CORRECTION: The user has flagged that the agent team breakdown has NOT been established properly — there are still only 4 agents instead of the required 6 distinct agents.
+
+Ensure the orchestrator immediately restructures into 6 distinct dedicated agents:
+1. Agent 1: Rust Core Calculation Engine
+2. Agent 2: WASM Target & Bindings
+3. Agent 3: Desktop Shell & Persistence
+4. Agent 4: UI Agent (spreadsheet UI, grid, ribbon, styling, charts)
+5. Agent 5: Testing Agent (unit, integration, Playwright E2E)
+6. Agent 6: Benchmarks Agent (100k+ cell performance benchmark harness)
+
+Please confirm this 6-agent structure is established immediately.
