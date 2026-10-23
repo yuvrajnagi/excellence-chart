@@ -1,4 +1,4 @@
-# BRIEFING — 2026-10-23T19:30:15Z
+# BRIEFING — 2026-10-23T20:20:15Z
 
 ## Mission
 Oversee the OpenExcel conversion to a high-performance Rust core engine with WASM and Desktop targets, route to orchestrator, monitor progress crons, and verify completion via Victory Auditor.
@@ -22,11 +22,12 @@ Oversee the OpenExcel conversion to a high-performance Rust core engine with WAS
 - **Delivered results**: none
 
 ## Project Status
-- **Phase**: in progress (Phase 0 and Phase 1 completed; Milestone 1 worker `worker_m1_rust` running for Rust core calculation engine)
+- **Phase**: in progress (Milestone 1 PASSED; Milestone 2 active with dedicated Agent 2 WASM worker and Agent 3 Desktop worker)
 - **Active Agents Roster**:
-  - All 6 survey agents completed handoffs
-  - Milestone 1 implementation worker active
-- **Liveness**: Healthy (orchestrator progress.md updated at 19:25:05 UTC)
+  - Milestone 1: Rust Core Calculation Engine (DONE: 37/37 tests passed, wasm32 clean, Auditor CLEAN)
+  - Milestone 2: Agent 2 WASM Worker (`ec75d766-ad05-4b51-9181-901b328907e2`) RUNNING
+  - Milestone 2: Agent 3 Desktop Worker (`9d26ea54-5866-4954-800b-757a2efac21a`) RUNNING
+- **Liveness**: Healthy (orchestrator progress.md updated at 20:19:40 UTC)
 - **Cron 1 (Progress Reporting)**: 5aebd329-a6ef-4471-bc56-95c5befacd4f/task-28 (*/8 * * * *)
 - **Cron 2 (Liveness Check)**: 5aebd329-a6ef-4471-bc56-95c5befacd4f/task-30 (*/10 * * * *)
 

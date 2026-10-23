@@ -41,8 +41,8 @@ Every requirement and feature mapped to the 6 Dedicated Agent Tracks:
 
 | # | Milestone Name | Scope | Assigned Track | Dependencies | Status |
 |---|----------------|-------|----------------|--------------|--------|
-| M1 | Rust Core Calculation Engine | `crates/openexcel-core`: sparse grid, Pratt parser, AST, dependency graph with `#CIRC!`, dynamic array spills (`#SPILL!`), 88 functions across 9 modules, `cargo test` | Agent 1 (Rust Core Engine) | none | PLANNED |
-| M2 | WASM Target & Desktop Shell | `crates/openexcel-wasm` (`wasm-pack build --target web`, TS bindings) + `crates/openexcel-desktop` (bundled SQLite WAL, headless CLI, local file I/O, Tauri config) | Agent 2 (WASM) & Agent 3 (Desktop) | M1 | PLANNED |
+| M1 | Rust Core Calculation Engine | `crates/openexcel-core`: sparse grid, Pratt parser, AST, dependency graph with `#CIRC!`, dynamic array spills (`#SPILL!`), 88 functions across 9 modules, `cargo test` | Agent 1 (Rust Core Engine) | none | DONE |
+| M2 | WASM Target & Desktop Shell | `crates/openexcel-wasm` (`wasm-pack build --target web`, TS bindings) + `crates/openexcel-desktop` (bundled SQLite WAL, headless CLI, local file I/O, Tauri config) | Agent 2 (WASM) & Agent 3 (Desktop) | M1 | IN_PROGRESS |
 | M3 | Integrated Spreadsheet UI | `apps/web/src/calculation.worker.ts` WASM integration, virtualized grid, ribbon, styling, charts, data tool dialogs, worker UI bindings | Agent 4 (UI Agent) | M2 | PLANNED |
 | M4 | Automated Testing & 100k Benchmarks | Unit test suites (`cargo test`), Playwright E2E suite, 100,000+ dependent cells recalculation benchmark (<1s), `artifacts/benchmark.json` | Agent 5 (Testing) & Agent 6 (Benchmarks) | M3 | PLANNED |
 

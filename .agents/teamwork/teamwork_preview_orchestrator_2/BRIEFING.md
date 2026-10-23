@@ -1,4 +1,4 @@
-# BRIEFING — 2026-10-23T20:02:00Z
+# BRIEFING — 2026-10-23T20:19:35Z
 
 ## Mission
 Convert OpenExcel into a high-performance spreadsheet system powered by a Rust core engine that compiles to WebAssembly (WASM) for the web client and bundles natively for Desktop, maintaining full Excel compatibility, virtualized editing, persistent storage, and reproducible benchmarks.
@@ -27,15 +27,15 @@ Convert OpenExcel into a high-performance spreadsheet system powered by a Rust c
 3. **On failure**:
    - Retry -> Replace -> Skip -> Redistribute -> Redesign
 4. **Succession**:
-   - At 16 spawns, write soft handoff.md, kill crons, spawn successor.
+   - Threshold reached: 16 / 16. When all subagents complete, write soft handoff.md, cancel crons, spawn successor.
 - **Work items**:
   1. Phase 0: 6-Agent Dedicated Survey & Architecture Mapping [completed]
-  2. M1: Rust Core Calculation Engine [remediation worker running]
-  3. M2: WASM Target & Desktop Shell [planned]
-  4. M3: Integrated Spreadsheet UI [planned]
-  5. M4: Automated Testing & 100k Benchmarks [planned]
-- **Current phase**: Phase 2 (Milestone 1 Remediation Iteration 2)
-- **Current focus**: `worker_m1_rust_remediation` fixing 6 isolated defects in `crates/openexcel-core`.
+  2. M1: Rust Core Calculation Engine [DONE - 37/37 tests passed, CLEAN audit]
+  3. M2: WASM Target & Desktop Shell [workers running in parallel]
+  4. M3: Integrated Spreadsheet UI [planned for next iteration]
+  5. M4: Automated Testing & 100k Benchmarks [planned for next iteration]
+- **Current phase**: Phase 2 (Milestone 2 Workers Execution)
+- **Current focus**: Monitoring `worker_m2_wasm` (`ec75d766-ad05-4b51-9181-901b328907e2`) and `worker_m2_desktop` (`9d26ea54-5866-4954-800b-757a2efac21a`).
 
 ## 🔒 Key Constraints
 - NEVER write, modify, or create source code files directly.
@@ -51,25 +51,22 @@ Convert OpenExcel into a high-performance spreadsheet system powered by a Rust c
 - Updated: 2026-10-23T19:12:29Z
 
 ## Key Decisions Made
-- Iteration 1 Gate failed (Reviewer 1 REQUEST_CHANGES, Challengers 1 & 2 REJECT; Auditor was CLEAN).
-- Isolated 6 defects: Date 1900-02-29 quirk, spill recovery cache clearing, deep chain topological recalculation, lambda application in evaluator, NPV div0, text grouping commas.
-- Dispatched `worker_m1_rust_remediation` with exact defect instructions.
+- Milestone 1 is DONE: 37/37 tests passed, 0 clippy warnings, wasm32 clean, and Forensic Auditor certified CLEAN.
+- Milestone 2 workers dispatched concurrently:
+  - Agent 2: `worker_m2_wasm` (`ec75d766-ad05-4b51-9181-901b328907e2`) for `crates/openexcel-wasm`.
+  - Agent 3: `worker_m2_desktop` (`9d26ea54-5866-4954-800b-757a2efac21a`) for `crates/openexcel-desktop` & `apps/desktop`.
+- Cumulative spawn count reached 16 / 16. Succession will execute upon completion of these two workers.
 
 ## Team Roster
 | Agent | Type | Work Item | Status | Conv ID |
 |-------|------|-----------|--------|---------|
-| worker_m1_rust | teamwork_preview_worker | M1: Implement Rust Core Calculation Engine | completed | 2b9ff3ce-26cd-4e3d-be37-ea5cf36e1307 |
-| reviewer_m1_rust_1 | teamwork_preview_reviewer | M1: Reviewer 1 Verification | completed (REQUEST_CHANGES) | 04f9137c-5b44-46fe-abbb-cd00ac6e5b68 |
-| reviewer_m1_rust_2 | teamwork_preview_reviewer | M1: Reviewer 2 Verification | completed (APPROVE) | 58a149b4-f5a6-45dc-89e8-5c30e276f188 |
-| challenger_m1_rust_1 | teamwork_preview_challenger | M1: Challenger 1 Adversarial Tests | completed (REJECT) | 7c6bda6e-759d-45bc-b495-8b09663b019a |
-| challenger_m1_rust_2 | teamwork_preview_challenger | M1: Challenger 2 Functions Stress | completed (REJECT) | 715afe9a-1212-44bc-8c51-c642dd2271a5 |
-| auditor_m1_rust | teamwork_preview_auditor | M1: Forensic Integrity Audit | completed (CLEAN) | cc794b17-578c-4efa-b63c-b3b78c94c86d |
-| worker_m1_rust_remediation | teamwork_preview_worker | M1: Remediate 6 defects in openexcel-core | in-progress | 436b5aa2-af7f-4f87-9266-5296f9fb980b |
+| worker_m2_wasm | teamwork_preview_worker | M2: WASM Target & Bindings Worker | in-progress | ec75d766-ad05-4b51-9181-901b328907e2 |
+| worker_m2_desktop | teamwork_preview_worker | M2: Desktop Shell & Persistence Worker | in-progress | 9d26ea54-5866-4954-800b-757a2efac21a |
 
 ## Succession Status
-- Succession required: no
-- Spawn count: 14 / 16
-- Pending subagents: 436b5aa2-af7f-4f87-9266-5296f9fb980b
+- Succession required: pending subagent completion
+- Spawn count: 16 / 16
+- Pending subagents: ec75d766-ad05-4b51-9181-901b328907e2, 9d26ea54-5866-4954-800b-757a2efac21a
 - Predecessor: teamwork_preview_orchestrator_1
 - Successor: not yet spawned
 
@@ -82,9 +79,7 @@ Convert OpenExcel into a high-performance spreadsheet system powered by a Rust c
 - `/workspaces/excellence-chart/PROJECT.md` — Project specification & milestone tracker
 - `/workspaces/excellence-chart/TEST_INFRA.md` — Test infrastructure definition
 - `/workspaces/excellence-chart/TEST_READY.md` — Test readiness artifact
-- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_orchestrator_2/GATE_STATUS.md` — Milestone 1 Gate status
-- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_worker_m1_rust/handoff.md` — Worker M1 handoff
-- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_reviewer_m1_rust_1/handoff.md` — Reviewer 1 defect report
-- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_challenger_m1_rust_1/handoff.md` — Challenger 1 report
-- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_challenger_m1_rust_2/handoff.md` — Challenger 2 report
-- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_auditor_m1_rust/handoff.md` — Auditor CLEAN report
+- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_orchestrator_2/GATE_STATUS.md` — Gate status
+- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_worker_m1_rust_remediation/handoff.md` — M1 Remediation handoff
+- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_worker_m2_wasm/context.md` — M2 WASM context
+- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_worker_m2_desktop/context.md` — M2 Desktop context

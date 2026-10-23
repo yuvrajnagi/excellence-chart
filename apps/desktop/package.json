@@ -1,0 +1,10 @@
+{
+  "name": "@openexcel/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OpenExcel Native Desktop Runner and Packaging",
+  "scripts": {
+    "desktop": "cargo run -p openexcel-desktop -- serve",
+    "build": "cargo build -p openexcel-desktop --release"
+  }
+}
