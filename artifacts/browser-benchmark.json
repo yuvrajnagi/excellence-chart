@@ -1,17 +1,17 @@
 {
-  "timestamp": "2026-10-23T19:19:47.107Z",
+  "timestamp": "2026-10-23T21:04:42.198Z",
   "browser": "Playwright Chromium headless",
   "viewport": {
     "width": 1440,
     "height": 1000
   },
   "populatedCells": 100000,
-  "loadIncludingApiMs": 5282,
+  "loadIncludingApiMs": 2743,
   "frames": 120,
-  "p50Ms": 59.09999999962747,
-  "p95Ms": 134.59999999962747,
-  "maxMs": 163.90000000037253,
+  "p50Ms": 26.600000000093132,
+  "p95Ms": 47.39999999990687,
+  "maxMs": 66.5,
   "maximumCells": 897,
-  "framesOver50Ms": 89,
+  "framesOver50Ms": 4,
   "notes": "One run, 120 requestAnimationFrame-driven scrolls. Includes automation and React work; does not model human wheel cadence. Target 60 FPS corresponds to ~16.7ms frames."
 }

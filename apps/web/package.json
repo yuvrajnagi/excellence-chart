@@ -7,6 +7,7 @@
     "@openexcel/model": "0.1.0",
     "@openexcel/formula": "0.1.0",
     "@openexcel/formatting": "0.1.0",
+    "@openexcel/formula-wasm": "0.1.0",
     "@openexcel/data": "0.1.0",
     "react": "19.1.0",
     "react-dom": "19.1.0"

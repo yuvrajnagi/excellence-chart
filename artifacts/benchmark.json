@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-10-23T19:16:14.213Z",
+  "timestamp": "2026-10-23T21:03:29.358Z",
   "environment": {
     "node": "v22.22.1",
     "platform": "linux",
     "release": "6.8.0-1064-azure",
-    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "cpu": "AMD EPYC 7763 64-Core Processor",
     "logicalCpus": 4,
     "totalMemoryBytes": 16770494464
   },
@@ -16,39 +16,39 @@
   "samples": [
     {
       "name": "100K formulas: construct 200K authored cells",
-      "ms": 218.78659199999993,
-      "heapDeltaBytes": 34371488,
-      "rssBytes": 206127104
+      "ms": 245.22911900000008,
+      "heapDeltaBytes": 35718408,
+      "rssBytes": 201519104
     },
     {
       "name": "100K formulas: cold recalculate",
-      "ms": 1853.6710359999997,
-      "heapDeltaBytes": 150596464,
-      "rssBytes": 403406848
+      "ms": 1320.692348,
+      "heapDeltaBytes": 150489904,
+      "rssBytes": 404750336
     },
     {
       "name": "100K formulas: update one input and recalculate",
-      "ms": 1.4049729999996998,
-      "heapDeltaBytes": 254424,
-      "rssBytes": 403537920
+      "ms": 1.3478139999997438,
+      "heapDeltaBytes": 251200,
+      "rssBytes": 404881408
     },
     {
       "name": "100K formulas: read 100K cached results",
-      "ms": 78.96654099999978,
-      "heapDeltaBytes": -2021448,
-      "rssBytes": 405766144
+      "ms": 60.4156280000002,
+      "heapDeltaBytes": -1700528,
+      "rssBytes": 406716416
     },
     {
       "name": "1M cells: construct sparse tiles",
-      "ms": 1540.7875869999998,
-      "heapDeltaBytes": -83557000,
-      "rssBytes": 412676096
+      "ms": 1123.9415290000002,
+      "heapDeltaBytes": -93611240,
+      "rssBytes": 360624128
     },
     {
       "name": "1M cells: serialize",
-      "ms": 492.6703729999999,
-      "heapDeltaBytes": 55745672,
-      "rssBytes": 471613440
+      "ms": 452.74604,
+      "heapDeltaBytes": 55547408,
+      "rssBytes": 425123840
     },
     {
       "name": "1M cells: JSON bytes",
@@ -56,47 +56,47 @@
     },
     {
       "name": "1M cells: parse JSON and validate schema",
-      "ms": 12822.597458,
-      "heapDeltaBytes": 403187008,
-      "rssBytes": 800776192
+      "ms": 10107.151495999999,
+      "heapDeltaBytes": 348583584,
+      "rssBytes": 741904384
     },
     {
       "name": "1M cells: initialize calculation engine",
-      "ms": 2643.453516999998,
-      "heapDeltaBytes": 14380200,
-      "rssBytes": 803397632
+      "ms": 2280.9581279999984,
+      "heapDeltaBytes": -1251112,
+      "rssBytes": 744525824
     },
     {
       "name": "XLSX export: challenge workbook (6 sheets)",
-      "ms": 88.73536800000147,
-      "heapDeltaBytes": 4252784,
-      "rssBytes": 812965888
+      "ms": 119.39577099999951,
+      "heapDeltaBytes": 4199648,
+      "rssBytes": 748982272
     },
     {
       "name": "XLSX challenge workbook: bytes",
-      "bytes": 18438
+      "bytes": 18430
     },
     {
       "name": "XLSX parse: challenge workbook",
-      "ms": 69.52050299999974,
-      "heapDeltaBytes": 6661984,
-      "rssBytes": 820043776
+      "ms": 130.63544700000057,
+      "heapDeltaBytes": -543156608,
+      "rssBytes": 617922560
     },
     {
       "name": "XLSX export: 10K cells (formulas + values)",
-      "ms": 498.3747860000003,
-      "heapDeltaBytes": 47091232,
-      "rssBytes": 898686976
+      "ms": 564.1683190000003,
+      "heapDeltaBytes": -8330960,
+      "rssBytes": 617365504
     },
     {
       "name": "XLSX 10K cells: bytes",
-      "bytes": 250302
+      "bytes": 250301
     },
     {
       "name": "XLSX parse: 10K cells",
-      "ms": 967.7489159999968,
-      "heapDeltaBytes": 26361584,
-      "rssBytes": 929021952
+      "ms": 808.9837569999981,
+      "heapDeltaBytes": 50147232,
+      "rssBytes": 639094784
     }
   ]
 }
