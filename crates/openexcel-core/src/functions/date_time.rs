@@ -55,6 +55,10 @@ pub fn ymd_to_serial(mut year: i32, mut month: i32, day: i32) -> Result<f64, Err
         year += 1;
     }
 
+    if year == 1900 && month == 2 && day == 29 {
+        return Ok(60.0);
+    }
+
     let start_of_month = NaiveDate::from_ymd_opt(year, month as u32, 1).ok_or(ErrorCode::Value)?;
     let target_date = start_of_month.checked_add_signed(Duration::days((day - 1) as i64)).ok_or(ErrorCode::Value)?;
     Ok(date_to_serial(target_date))

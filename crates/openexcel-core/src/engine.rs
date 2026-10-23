@@ -6,10 +6,101 @@ use crate::graph::{CycleDetector, DependencyGraph};
 use crate::grid::WorkbookGrid;
 use crate::parser::parse_formula;
 use crate::spill::SpillManager;
+use crate::ast::AstNode;
 use crate::types::{
     Cell, CellAddress, CellInput, ComputedValue, DefinedName, ErrorCode,
     RangeRef, ResourceLimits, TableDefinition, Workbook,
 };
+
+fn extract_ast_dependencies(
+    node: &AstNode,
+    current_addr: &CellAddress,
+    grid: &WorkbookGrid,
+    graph: &mut DependencyGraph,
+) {
+    match node {
+        AstNode::CellRef { sheet, row, col, .. } => {
+            let sheet_id = match sheet {
+                Some(s) => grid.resolve_sheet_id(s).unwrap_or(s).to_string(),
+                None => current_addr.sheet_id.clone(),
+            };
+            let target = CellAddress {
+                sheet_id,
+                row: *row,
+                col: *col,
+            };
+            graph.add_cell_dependency(current_addr, &target);
+        }
+        AstNode::Range { from, to } => {
+            if let (
+                AstNode::CellRef { sheet: s1, row: r1, col: c1, .. },
+                AstNode::CellRef { sheet: s2, row: r2, col: c2, .. },
+            ) = (&**from, &**to)
+            {
+                let sheet_str = s1.as_ref().or(s2.as_ref());
+                let sheet_id = match sheet_str {
+                    Some(s) => grid.resolve_sheet_id(s).unwrap_or(s).to_string(),
+                    None => current_addr.sheet_id.clone(),
+                };
+                let top = (*r1).min(*r2);
+                let bottom = (*r1).max(*r2);
+                let left = (*c1).min(*c2);
+                let right = (*c1).max(*c2);
+                let range_ref = RangeRef {
+                    sheet_id: sheet_id.clone(),
+                    top,
+                    left,
+                    bottom,
+                    right,
+                };
+                graph.add_range_dependency(current_addr, range_ref);
+
+                let cell_count = ((bottom - top + 1) as usize).saturating_mul((right - left + 1) as usize);
+                if cell_count <= 2048 {
+                    for r in top..=bottom {
+                        for c in left..=right {
+                            graph.add_cell_dependency(
+                                current_addr,
+                                &CellAddress {
+                                    sheet_id: sheet_id.clone(),
+                                    row: r,
+                                    col: c,
+                                },
+                            );
+                        }
+                    }
+                }
+            } else {
+                extract_ast_dependencies(from, current_addr, grid, graph);
+                extract_ast_dependencies(to, current_addr, grid, graph);
+            }
+        }
+        AstNode::Unary { expr, .. } => {
+            extract_ast_dependencies(expr, current_addr, grid, graph);
+        }
+        AstNode::Binary { left, right, .. } => {
+            extract_ast_dependencies(left, current_addr, grid, graph);
+            extract_ast_dependencies(right, current_addr, grid, graph);
+        }
+        AstNode::FunctionCall { args, .. } => {
+            for arg in args {
+                extract_ast_dependencies(arg, current_addr, grid, graph);
+            }
+        }
+        AstNode::ArrayLiteral { elements, .. } => {
+            for elem in elements {
+                extract_ast_dependencies(elem, current_addr, grid, graph);
+            }
+        }
+        AstNode::Apply { callee, args } => {
+            extract_ast_dependencies(callee, current_addr, grid, graph);
+            for arg in args {
+                extract_ast_dependencies(arg, current_addr, grid, graph);
+            }
+        }
+        _ => {}
+    }
+}
 
 pub struct DeterministicPrng {
     state: u64,
@@ -55,13 +146,13 @@ impl<'a> GridReader for EngineGridReader<'a> {
             col,
         };
 
-        // 1. Check computed value cache
-        if let Some(val) = self.computed.borrow().get(&addr) {
-            return Ok(val.clone());
-        }
-
-        // 2. Check if this cell is a spilled child of an anchor
-        if let Some(anchor) = self.spills.borrow().get_anchor_for_child(&addr).cloned() {
+        // 1. Check if this cell is a spilled child of an anchor
+        let anchor_opt = self.spills.borrow().get_anchor_for_child(&addr).cloned();
+        if let Some(anchor) = anchor_opt {
+            let anchor_computed = self.computed.borrow().contains_key(&anchor);
+            if !anchor_computed {
+                let _ = self.read_cell(&anchor.sheet_id, anchor.row, anchor.col);
+            }
             if let Some(ComputedValue::Array { rows, cols, values, .. }) = self.computed.borrow().get(&anchor) {
                 let r = (row - anchor.row) as usize;
                 let c = (col - anchor.col) as usize;
@@ -70,6 +161,12 @@ impl<'a> GridReader for EngineGridReader<'a> {
                     return Ok(ComputedValue::Scalar(val));
                 }
             }
+        }
+
+        // 2. Check computed value cache
+        let cached_opt = self.computed.borrow().get(&addr).cloned();
+        if let Some(val) = cached_opt {
+            return Ok(val);
         }
 
         // 3. Check authored cell in grid
@@ -118,6 +215,11 @@ impl<'a> GridReader for EngineGridReader<'a> {
 
                     self.cycle_detector.borrow_mut().exit(&addr);
 
+                    let computed_res = match computed_res {
+                        Ok(ComputedValue::Lambda { .. }) => Err(ErrorCode::Calc),
+                        other => other,
+                    };
+
                     match computed_res {
                         Ok(val) => {
                             if let ComputedValue::Array { rows, cols, .. } = &val {
@@ -132,7 +234,24 @@ impl<'a> GridReader for EngineGridReader<'a> {
                                     }
                                 };
                                 match self.spills.borrow_mut().register_spill(&addr, *rows, *cols, is_occupied) {
-                                    Ok(_) => {
+                                    Ok(Some(rect)) => {
+                                        for r in rect.top..=rect.bottom {
+                                            for c in rect.left..=rect.right {
+                                                if r == addr.row && c == addr.col {
+                                                    continue;
+                                                }
+                                                let child_addr = CellAddress {
+                                                    sheet_id: addr.sheet_id.clone(),
+                                                    row: r,
+                                                    col: c,
+                                                };
+                                                self.computed.borrow_mut().remove(&child_addr);
+                                            }
+                                        }
+                                        self.computed.borrow_mut().insert(addr.clone(), val.clone());
+                                        Ok(val)
+                                    }
+                                    Ok(None) => {
                                         self.computed.borrow_mut().insert(addr.clone(), val.clone());
                                         Ok(val)
                                     }
@@ -232,21 +351,26 @@ impl Engine {
         }
 
         let mut dirty = HashSet::new();
+        let mut graph = DependencyGraph::new();
         for (sheet_id, sheet_grid) in &grid.sheets {
             for (r, c, cell) in sheet_grid.iter_cells() {
-                if matches!(cell.input, CellInput::Formula { .. }) {
-                    dirty.insert(CellAddress {
+                if let CellInput::Formula { source } = &cell.input {
+                    let addr = CellAddress {
                         sheet_id: sheet_id.clone(),
                         row: r,
                         col: c,
-                    });
+                    };
+                    dirty.insert(addr.clone());
+                    if let Ok(ast) = parse_formula(source) {
+                        extract_ast_dependencies(&ast, &addr, &grid, &mut graph);
+                    }
                 }
             }
         }
 
         Self {
             grid,
-            graph: RefCell::new(DependencyGraph::new()),
+            graph: RefCell::new(graph),
             spills: RefCell::new(SpillManager::new()),
             computed: RefCell::new(HashMap::new()),
             cycle_detector: RefCell::new(CycleDetector::new()),
@@ -280,12 +404,14 @@ impl Engine {
         // If cell was an anchor, clear its spill
         let cleared = self.spills.borrow_mut().clear_spill(&addr);
         for child in cleared {
+            self.computed.borrow_mut().remove(&child);
             self.dirty.insert(child);
         }
 
-        // If cell was a child of a spill, invalidate the anchor
+        // If cell was a child of a spill, invalidate the anchor and remove child from computed
         if let Some(anchor) = self.spills.borrow().get_anchor_for_child(&addr).cloned() {
             self.computed.borrow_mut().remove(&anchor);
+            self.computed.borrow_mut().remove(&addr);
             self.dirty.insert(anchor);
         }
 
@@ -303,6 +429,12 @@ impl Engine {
         }
 
         self.graph.borrow_mut().clear_dependencies(&addr);
+        if let CellInput::Formula { source } = &cell.input {
+            if let Ok(ast) = parse_formula(source) {
+                extract_ast_dependencies(&ast, &addr, &self.grid, &mut self.graph.borrow_mut());
+            }
+        }
+
         self.computed.borrow_mut().remove(&addr);
         self.grid.set_cell(&actual_id, row, col, cell);
         self.dirty.insert(addr);
@@ -349,6 +481,7 @@ impl Engine {
 
         let env = HashMap::new();
         match evaluator.eval_ast(&ast, origin, &env) {
+            Ok(ComputedValue::Lambda { .. }) => ComputedValue::error(ErrorCode::Calc),
             Ok(val) => val,
             Err(code) => ComputedValue::error(code),
         }
@@ -403,7 +536,84 @@ impl Engine {
             return result;
         }
 
-        let dirty_list: Vec<CellAddress> = self.dirty.drain().collect();
+        let dirty_set: HashSet<CellAddress> = std::mem::take(&mut self.dirty);
+
+        // 1. Invalidate cached computed entries for all dirty cells
+        for addr in &dirty_set {
+            self.computed.borrow_mut().remove(addr);
+        }
+
+        // 2. Ensure AST dependencies are recorded for all dirty formula cells
+        for addr in &dirty_set {
+            if !self.graph.borrow().deps.contains_key(addr) {
+                if let Some(cell) = self.grid.get_cell(&addr.sheet_id, addr.row, addr.col) {
+                    if let CellInput::Formula { source } = &cell.input {
+                        if let Ok(ast) = parse_formula(source) {
+                            extract_ast_dependencies(&ast, addr, &self.grid, &mut self.graph.borrow_mut());
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Compute in-degree within the dirty set using graph.deps
+        let graph_ref = self.graph.borrow();
+        let mut in_degree: HashMap<CellAddress, usize> = HashMap::with_capacity(dirty_set.len());
+        for u in &dirty_set {
+            let mut deg = 0;
+            if let Some(deps) = graph_ref.deps.get(u) {
+                for d in deps {
+                    if dirty_set.contains(d) && d != u {
+                        deg += 1;
+                    }
+                }
+            }
+            in_degree.insert(u.clone(), deg);
+        }
+
+        // 4. Seed queue with cells having in-degree 0 (dependencies/roots)
+        let mut queue = std::collections::VecDeque::new();
+        for u in &dirty_set {
+            if in_degree.get(u) == Some(&0) {
+                queue.push_back(u.clone());
+            }
+        }
+
+        // 5. Kahn's topological sort: dependencies before dependents
+        let mut sorted_list = Vec::with_capacity(dirty_set.len());
+        let mut visited = HashSet::with_capacity(dirty_set.len());
+
+        while let Some(u) = queue.pop_front() {
+            if !visited.insert(u.clone()) {
+                continue;
+            }
+            sorted_list.push(u.clone());
+
+            let direct_dependents = graph_ref.get_direct_dependents(&u);
+            for v in direct_dependents {
+                if dirty_set.contains(&v) && v != u {
+                    if let Some(deg) = in_degree.get_mut(&v) {
+                        if *deg > 0 {
+                            *deg -= 1;
+                            if *deg == 0 {
+                                queue.push_back(v);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 6. Append any remaining unvisited cells (e.g. cyclic references)
+        if sorted_list.len() < dirty_set.len() {
+            for u in &dirty_set {
+                if visited.insert(u.clone()) {
+                    sorted_list.push(u.clone());
+                }
+            }
+        }
+        drop(graph_ref);
+
         let reader = EngineGridReader {
             grid: &self.grid,
             computed: &self.computed,
@@ -418,11 +628,7 @@ impl Engine {
             random_seed: self.random_seed,
         };
 
-        for addr in &dirty_list {
-            self.computed.borrow_mut().remove(addr);
-        }
-
-        for addr in dirty_list {
+        for addr in sorted_list {
             match reader.read_cell(&addr.sheet_id, addr.row, addr.col) {
                 Ok(val) => {
                     result.calculated_count += 1;

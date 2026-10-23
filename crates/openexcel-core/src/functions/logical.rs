@@ -134,6 +134,9 @@ pub fn if_fn(
                     ComputedValue::Scalar(s) => {
                         out_scalars.push(s.clone());
                     }
+                    _ => {
+                        out_scalars.push(Scalar::error(ErrorCode::Calc));
+                    }
                 }
             }
 
@@ -150,6 +153,7 @@ pub fn if_fn(
                 else_fn()
             }
         }
+        _ => Err(ErrorCode::Calc),
     }
 }
 
@@ -172,6 +176,7 @@ pub fn iferror(
                             new_values.push(fb_vals.get(i).cloned().unwrap_or(Scalar::error(ErrorCode::NA)));
                         }
                         ComputedValue::Scalar(s) => new_values.push(s.clone()),
+                        _ => new_values.push(Scalar::error(ErrorCode::Calc)),
                     }
                 } else {
                     new_values.push(val);
@@ -186,6 +191,7 @@ pub fn iferror(
                 Ok(ComputedValue::Scalar(s))
             }
         }
+        Ok(ComputedValue::Lambda { .. }) => fallback_fn(),
         Err(_) => fallback_fn(),
     }
 }
@@ -209,6 +215,7 @@ pub fn ifna(
                             new_values.push(fb_vals.get(i).cloned().unwrap_or(Scalar::error(ErrorCode::NA)));
                         }
                         ComputedValue::Scalar(s) => new_values.push(s.clone()),
+                        _ => new_values.push(Scalar::error(ErrorCode::Calc)),
                     }
                 } else {
                     new_values.push(val);

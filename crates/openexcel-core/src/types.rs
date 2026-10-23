@@ -358,6 +358,12 @@ pub enum ComputedValue {
         values: Vec<Scalar>,
     },
     Scalar(Scalar),
+    #[serde(skip)]
+    Lambda {
+        params: Vec<String>,
+        body: Box<crate::ast::AstNode>,
+        env: HashMap<String, ComputedValue>,
+    },
 }
 
 impl ComputedValue {
@@ -400,10 +406,15 @@ impl ComputedValue {
         matches!(self, ComputedValue::Array { .. })
     }
 
+    pub fn is_lambda(&self) -> bool {
+        matches!(self, ComputedValue::Lambda { .. })
+    }
+
     pub fn is_error(&self) -> bool {
         match self {
             ComputedValue::Scalar(s) => s.is_error(),
             ComputedValue::Array { values, .. } => values.iter().any(|v| v.is_error()),
+            ComputedValue::Lambda { .. } => false,
         }
     }
 
@@ -411,6 +422,7 @@ impl ComputedValue {
         match self {
             ComputedValue::Scalar(s) => s.error_code(),
             ComputedValue::Array { values, .. } => values.iter().find_map(|v| v.error_code()),
+            ComputedValue::Lambda { .. } => Some(ErrorCode::Calc),
         }
     }
 
@@ -418,6 +430,7 @@ impl ComputedValue {
         match self {
             ComputedValue::Scalar(s) => s.clone(),
             ComputedValue::Array { values, .. } => values.first().cloned().unwrap_or(Scalar::Null),
+            ComputedValue::Lambda { .. } => Scalar::error(ErrorCode::Calc),
         }
     }
 
@@ -429,6 +442,7 @@ impl ComputedValue {
                 cols: *cols,
                 values: values.clone(),
             },
+            ComputedValue::Lambda { .. } => ArrayValue::from_scalar(Scalar::error(ErrorCode::Calc)),
         }
     }
 
@@ -436,6 +450,7 @@ impl ComputedValue {
         match self {
             ComputedValue::Scalar(s) => vec![s.clone()],
             ComputedValue::Array { values, .. } => values.clone(),
+            ComputedValue::Lambda { .. } => vec![Scalar::error(ErrorCode::Calc)],
         }
     }
 }

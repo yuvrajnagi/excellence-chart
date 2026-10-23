@@ -139,17 +139,18 @@ fn test_adversarial_deep_dependency_chain_1000() {
     let wb = create_test_workbook();
     let mut engine = Engine::new(&wb);
 
-    const CHAIN_LENGTH: usize = 200;
+    const CHAIN_LENGTH: usize = 1000;
 
     // A1 = 1.0
     engine.set_cell("sheet1", 0, 0, Cell::value(1.0));
 
+    // A{r+1} = A{r} + 1 for r in 1..=CHAIN_LENGTH
     for r in 1..=CHAIN_LENGTH {
         let formula = format!("=A{} + 1", r);
         engine.set_cell("sheet1", r as u32, 0, Cell::formula(formula));
     }
 
-    // Initial recalculation of 1,000 sequential cells
+    // Recalculation of 1,000 sequential cells: MUST NOT stack overflow or crash
     let res = engine.recalculate();
     assert_eq!(res.errors.len(), 0, "No errors should occur in clean dependency chain");
 
@@ -185,7 +186,7 @@ fn test_adversarial_deep_dependency_chain_1000() {
 }
 
 // ----------------------------------------------------------------------------
-// 3. Cycle Detection: Mutual, Multi-Node, Self-References (#CIRC!)
+// 3. Cycle Detection: Mutual, Multi-Node, Self-References, Range Cycles (#CIRC!)
 // ----------------------------------------------------------------------------
 
 #[test]
@@ -223,13 +224,19 @@ fn test_adversarial_cycle_detection() {
     let f1_val = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 0, col: 5 });
     assert_eq!(f1_val.error_code(), Some(ErrorCode::Circ), "F1 self-reference must be #CIRC!");
 
-    // 3.4 Downstream cell depending on a cycle: G1 = A1 + 100
+    // 3.4 Range self-reference: H1 = SUM(H1:H5)
+    engine.set_cell("sheet1", 0, 7, Cell::formula("=SUM(H1:H5)"));
+    engine.recalculate();
+    let h1_val = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 0, col: 7 });
+    assert_eq!(h1_val.error_code(), Some(ErrorCode::Circ), "H1 referencing range containing itself must return #CIRC!");
+
+    // 3.5 Downstream cell depending on a cycle: G1 = A1 + 100
     engine.set_cell("sheet1", 0, 6, Cell::formula("=A1 + 100"));
     engine.recalculate();
     let g1_val = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 0, col: 6 });
     assert_eq!(g1_val.error_code(), Some(ErrorCode::Circ), "G1 depending on #CIRC! must propagate #CIRC!");
 
-    // 3.5 Breaking the cycle: overwrite B1 with a constant 10.0
+    // 3.6 Breaking the cycle: overwrite B1 with a constant 10.0
     engine.set_cell("sheet1", 0, 1, Cell::value(10.0));
     engine.recalculate();
     let a1_fixed = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 0, col: 0 });
@@ -243,7 +250,7 @@ fn test_adversarial_cycle_detection() {
 // ----------------------------------------------------------------------------
 
 #[test]
-fn test_adversarial_dynamic_array_spills() {
+fn test_adversarial_spill_collision_with_authored() {
     let wb = create_test_workbook();
     let mut engine = Engine::new(&wb);
 
@@ -266,9 +273,13 @@ fn test_adversarial_dynamic_array_spills() {
 
     let a1_cleared = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 0, col: 0 });
     assert!(a1_cleared.is_array(), "A1 must successfully spill after collision cleared");
-    let b2_spilled = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 1, col: 1 });
-    assert_eq!(b2_spilled.to_scalar(), Scalar::number(5.0)); // SEQUENCE(3, 3): (1,1) is 5.0
 
+    let b2_spilled = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 1, col: 1 });
+    assert_eq!(b2_spilled.to_scalar(), Scalar::number(5.0), "B2 should receive spilled value 5.0");
+}
+
+#[test]
+fn test_adversarial_spill_on_spill_collision() {
     // 4.2 Collision with another spill: Spill-on-Spill collision
     // Clear sheet and set up two overlapping dynamic array formulas:
     // A1 = SEQUENCE(3, 3, 1, 1) [occupies rows 0..2, cols 0..2]
@@ -284,7 +295,10 @@ fn test_adversarial_dynamic_array_spills() {
     // One or both must report #SPILL! because their footprints collide
     let has_spill_error = a1_val.error_code() == Some(ErrorCode::Spill) || b2_val.error_code() == Some(ErrorCode::Spill);
     assert!(has_spill_error, "Overlapping dynamic arrays must trigger #SPILL!");
+}
 
+#[test]
+fn test_adversarial_spill_boundary_limits() {
     // 4.3 Boundary checks at grid limits: XFD (col 16383) and row 1048575
     let wb3 = create_test_workbook();
     let mut engine3 = Engine::new(&wb3);

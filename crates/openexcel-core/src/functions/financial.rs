@@ -98,6 +98,9 @@ pub fn npv(args: &[ComputedValue]) -> Result<ComputedValue, ErrorCode> {
         return Err(ErrorCode::Value);
     }
     let rate = args[0].to_scalar().as_f64()?;
+    if (1.0 + rate).abs() < 1e-12 {
+        return Err(ErrorCode::Div0);
+    }
     let mut total = 0.0;
     let mut period = 1;
 
@@ -108,6 +111,10 @@ pub fn npv(args: &[ComputedValue]) -> Result<ComputedValue, ErrorCode> {
                 period += 1;
             }
         }
+    }
+
+    if !total.is_finite() {
+        return Err(ErrorCode::Div0);
     }
 
     Ok(ComputedValue::number(total))

@@ -349,11 +349,41 @@ pub fn text(args: &[ComputedValue]) -> Result<ComputedValue, ErrorCode> {
     };
 
     let formatted_num = format!("{:.*}", decimal_places, display_val);
+    let num_str = if fmt_str.contains(',') {
+        let (int_part, frac_part) = match formatted_num.split_once('.') {
+            Some((i, f)) => (i, Some(f)),
+            None => (formatted_num.as_str(), None),
+        };
+        let (is_neg, digits) = if let Some(stripped) = int_part.strip_prefix('-') {
+            (true, stripped)
+        } else {
+            (false, int_part)
+        };
+        let len = digits.len();
+        let mut grouped = String::with_capacity(len + len / 3 + 1);
+        if is_neg {
+            grouped.push('-');
+        }
+        for (i, ch) in digits.chars().enumerate() {
+            if i > 0 && (len - i) % 3 == 0 {
+                grouped.push(',');
+            }
+            grouped.push(ch);
+        }
+        if let Some(f) = frac_part {
+            grouped.push('.');
+            grouped.push_str(f);
+        }
+        grouped
+    } else {
+        formatted_num
+    };
+
     let mut result = String::new();
     if fmt_str.contains('$') {
         result.push('$');
     }
-    result.push_str(&formatted_num);
+    result.push_str(&num_str);
     if is_pct {
         result.push('%');
     }

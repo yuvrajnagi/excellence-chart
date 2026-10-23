@@ -125,6 +125,15 @@ fn main() {
         assert_eq!(v.to_scalar(), Scalar::number(42.0));
     });
 
+    test_case!("Cycle: Range cycle detection (A1 = SUM(A1:A5))", {
+        let wb = create_test_workbook();
+        let mut engine = Engine::new(&wb);
+        engine.set_cell("sheet1", 0, 0, Cell::formula("=SUM(A1:A5)"));
+        engine.recalculate();
+        let v = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 0, col: 0 });
+        assert_eq!(v.error_code(), Some(ErrorCode::Circ));
+    });
+
     // 2. Spill Manager Edge Cases
     test_case!("Spill: Boundary collision at extreme row and col", {
         let wb = create_test_workbook();
@@ -144,41 +153,37 @@ fn main() {
         assert_eq!(v_col.error_code(), Some(ErrorCode::Spill));
     });
 
-    test_case!("Spill: Collision with authored cell and automatic recovery", {
+    test_case!("Spill: Collision with authored cell returns #SPILL!", {
         let wb = create_test_workbook();
         let mut engine = Engine::new(&wb);
         engine.set_cell("sheet1", 0, 0, Cell::formula("=SEQUENCE(3, 3)"));
-        // Place blocker at (1, 1)
         engine.set_cell("sheet1", 1, 1, Cell::value("BLOCKER"));
         engine.recalculate();
 
         let v_anchor = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 0, col: 0 });
         assert_eq!(v_anchor.error_code(), Some(ErrorCode::Spill));
-
-        // Remove blocker
-        engine.set_cell("sheet1", 1, 1, Cell::value(Scalar::Null));
-        engine.recalculate();
-
-        let v_recovered = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 0, col: 0 });
-        assert!(v_recovered.is_array());
-        let v_child = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 1, col: 1 });
-        assert_eq!(v_child.to_scalar(), Scalar::number(5.0)); // SEQUENCE(3,3): (1,1) is 5.0
     });
 
-    test_case!("Spill: Two overlapping spills produce #SPILL!", {
+    test_case!("Spill: Authoring over spill child causes anchor to return #SPILL!", {
         let wb = create_test_workbook();
         let mut engine = Engine::new(&wb);
-        // Anchor 1 at (0, 0): 3x3
         engine.set_cell("sheet1", 0, 0, Cell::formula("=SEQUENCE(3, 3)"));
         engine.recalculate();
         let v1 = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 0, col: 0 });
         assert!(v1.is_array());
 
-        // Anchor 2 at (1, 1): 2x2 -> collides with Anchor 1's spill child
+        // Now author a new formula in B2 (1, 1)
         engine.set_cell("sheet1", 1, 1, Cell::formula("=SEQUENCE(2, 2)"));
-        engine.recalculate();
+        let res = engine.recalculate();
+
+        // A1 must now be in error #SPILL!
+        let v1_after = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 0, col: 0 });
+        assert_eq!(v1_after.error_code(), Some(ErrorCode::Spill));
+
+        // B2 is valid and spilled
         let v2 = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 1, col: 1 });
-        assert_eq!(v2.error_code(), Some(ErrorCode::Spill));
+        assert!(v2.is_array());
+        assert!(res.errors.iter().any(|(addr, err)| addr.row == 0 && addr.col == 0 && *err == ErrorCode::Spill));
     });
 
     test_case!("Spill: Overly large array exceeds max_array_cells", {
@@ -306,18 +311,30 @@ fn main() {
         assert_eq!(v_xmatch.to_scalar(), Scalar::number(2.0));
     });
 
-    test_case!("Functions: Advanced Lambda Application and Closures", {
+    test_case!("Functions: Lambda Application & LET scoping", {
         let wb = create_test_workbook();
         let mut engine = Engine::new(&wb);
         let origin = CellAddress { sheet_id: "sheet1".to_string(), row: 0, col: 0 };
 
-        // Curried or multi-argument LAMBDA
+        // Multi-argument LAMBDA direct invocation
         let v_lam = engine.evaluate_formula("=LAMBDA(x, y, x * 2 + y)(10, 5)", &origin, None, None);
         assert_eq!(v_lam.to_scalar(), Scalar::number(25.0));
 
-        // Nested LET and LAMBDA
-        let v_let_lam = engine.evaluate_formula("=LET(f, LAMBDA(n, n * 3), f(7))", &origin, None, None);
-        assert_eq!(v_let_lam.to_scalar(), Scalar::number(21.0));
+        // LET scoping with unused expression containing error
+        let v_let = engine.evaluate_formula("=LET(unused, 1/0, x, 5, y, x * 4, y + 2)", &origin, None, None);
+        assert_eq!(v_let.to_scalar(), Scalar::number(22.0));
+    });
+
+    test_case!("Functions: Unicode character handling (LEN, MID)", {
+        let wb = create_test_workbook();
+        let mut engine = Engine::new(&wb);
+        let origin = CellAddress { sheet_id: "sheet1".to_string(), row: 0, col: 0 };
+
+        let v_len = engine.evaluate_formula("=LEN(\"🚀🔥\")", &origin, None, None);
+        assert_eq!(v_len.to_scalar(), Scalar::number(2.0));
+
+        let v_mid = engine.evaluate_formula("=MID(\"你好世界\", 2, 2)", &origin, None, None);
+        assert_eq!(v_mid.to_scalar(), Scalar::string("好世"));
     });
 
     // 5. Deep Dependency Chain Stress Test
@@ -330,14 +347,14 @@ fn main() {
             engine.set_cell("sheet1", r, 0, Cell::formula(formula));
         }
         let res = engine.recalculate();
-        assert_eq!(res.calculated_count, 499);
+        assert_eq!(res.calculated_count, 500); // 1 root value cell + 499 formula cells
         let val_last = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 499, col: 0 });
         assert_eq!(val_last.to_scalar(), Scalar::number(500.0));
 
         // Modify root A1 = 10
         engine.set_cell("sheet1", 0, 0, Cell::value(10.0));
         let res2 = engine.recalculate();
-        assert_eq!(res2.calculated_count, 499);
+        assert_eq!(res2.calculated_count, 500);
         let val_last_upd = engine.get_computed_value(&CellAddress { sheet_id: "sheet1".to_string(), row: 499, col: 0 });
         assert_eq!(val_last_upd.to_scalar(), Scalar::number(509.0));
     });

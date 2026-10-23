@@ -1,4 +1,4 @@
-# BRIEFING — 2026-10-23T19:50:15Z
+# BRIEFING — 2026-10-23T20:02:00Z
 
 ## Mission
 Convert OpenExcel into a high-performance spreadsheet system powered by a Rust core engine that compiles to WebAssembly (WASM) for the web client and bundles natively for Desktop, maintaining full Excel compatibility, virtualized editing, persistent storage, and reproducible benchmarks.
@@ -30,12 +30,12 @@ Convert OpenExcel into a high-performance spreadsheet system powered by a Rust c
    - At 16 spawns, write soft handoff.md, kill crons, spawn successor.
 - **Work items**:
   1. Phase 0: 6-Agent Dedicated Survey & Architecture Mapping [completed]
-  2. M1: Rust Core Calculation Engine [verification in progress]
+  2. M1: Rust Core Calculation Engine [remediation worker running]
   3. M2: WASM Target & Desktop Shell [planned]
   4. M3: Integrated Spreadsheet UI [planned]
   5. M4: Automated Testing & 100k Benchmarks [planned]
-- **Current phase**: Phase 2 (Milestone 1 Verification Gate)
-- **Current focus**: Reviewers, Challengers, and Forensic Auditor verifying `crates/openexcel-core`.
+- **Current phase**: Phase 2 (Milestone 1 Remediation Iteration 2)
+- **Current focus**: `worker_m1_rust_remediation` fixing 6 isolated defects in `crates/openexcel-core`.
 
 ## 🔒 Key Constraints
 - NEVER write, modify, or create source code files directly.
@@ -51,23 +51,25 @@ Convert OpenExcel into a high-performance spreadsheet system powered by a Rust c
 - Updated: 2026-10-23T19:12:29Z
 
 ## Key Decisions Made
-- `crates/openexcel-core` fully implemented by `worker_m1_rust` (24/24 cargo tests passing, clippy clean, wasm32 clean).
-- Dispatched 2 Reviewers, 2 Challengers, and 1 Forensic Auditor for Milestone 1 Gate verification.
+- Iteration 1 Gate failed (Reviewer 1 REQUEST_CHANGES, Challengers 1 & 2 REJECT; Auditor was CLEAN).
+- Isolated 6 defects: Date 1900-02-29 quirk, spill recovery cache clearing, deep chain topological recalculation, lambda application in evaluator, NPV div0, text grouping commas.
+- Dispatched `worker_m1_rust_remediation` with exact defect instructions.
 
 ## Team Roster
 | Agent | Type | Work Item | Status | Conv ID |
 |-------|------|-----------|--------|---------|
 | worker_m1_rust | teamwork_preview_worker | M1: Implement Rust Core Calculation Engine | completed | 2b9ff3ce-26cd-4e3d-be37-ea5cf36e1307 |
-| reviewer_m1_rust_1 | teamwork_preview_reviewer | M1: Reviewer 1 Verification | in-progress | 04f9137c-5b44-46fe-abbb-cd00ac6e5b68 |
-| reviewer_m1_rust_2 | teamwork_preview_reviewer | M1: Reviewer 2 Verification | in-progress | 58a149b4-f5a6-45dc-89e8-5c30e276f188 |
-| challenger_m1_rust_1 | teamwork_preview_challenger | M1: Challenger 1 Adversarial Tests | in-progress | 7c6bda6e-759d-45bc-b495-8b09663b019a |
-| challenger_m1_rust_2 | teamwork_preview_challenger | M1: Challenger 2 Functions Stress | in-progress | 715afe9a-1212-44bc-8c51-c642dd2271a5 |
-| auditor_m1_rust | teamwork_preview_auditor | M1: Forensic Integrity Audit | in-progress | cc794b17-578c-4efa-b63c-b3b78c94c86d |
+| reviewer_m1_rust_1 | teamwork_preview_reviewer | M1: Reviewer 1 Verification | completed (REQUEST_CHANGES) | 04f9137c-5b44-46fe-abbb-cd00ac6e5b68 |
+| reviewer_m1_rust_2 | teamwork_preview_reviewer | M1: Reviewer 2 Verification | completed (APPROVE) | 58a149b4-f5a6-45dc-89e8-5c30e276f188 |
+| challenger_m1_rust_1 | teamwork_preview_challenger | M1: Challenger 1 Adversarial Tests | completed (REJECT) | 7c6bda6e-759d-45bc-b495-8b09663b019a |
+| challenger_m1_rust_2 | teamwork_preview_challenger | M1: Challenger 2 Functions Stress | completed (REJECT) | 715afe9a-1212-44bc-8c51-c642dd2271a5 |
+| auditor_m1_rust | teamwork_preview_auditor | M1: Forensic Integrity Audit | completed (CLEAN) | cc794b17-578c-4efa-b63c-b3b78c94c86d |
+| worker_m1_rust_remediation | teamwork_preview_worker | M1: Remediate 6 defects in openexcel-core | in-progress | 436b5aa2-af7f-4f87-9266-5296f9fb980b |
 
 ## Succession Status
 - Succession required: no
-- Spawn count: 13 / 16
-- Pending subagents: 04f9137c-5b44-46fe-abbb-cd00ac6e5b68, 58a149b4-f5a6-45dc-89e8-5c30e276f188, 7c6bda6e-759d-45bc-b495-8b09663b019a, 715afe9a-1212-44bc-8c51-c642dd2271a5, cc794b17-578c-4efa-b63c-b3b78c94c86d
+- Spawn count: 14 / 16
+- Pending subagents: 436b5aa2-af7f-4f87-9266-5296f9fb980b
 - Predecessor: teamwork_preview_orchestrator_1
 - Successor: not yet spawned
 
@@ -82,3 +84,7 @@ Convert OpenExcel into a high-performance spreadsheet system powered by a Rust c
 - `/workspaces/excellence-chart/TEST_READY.md` — Test readiness artifact
 - `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_orchestrator_2/GATE_STATUS.md` — Milestone 1 Gate status
 - `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_worker_m1_rust/handoff.md` — Worker M1 handoff
+- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_reviewer_m1_rust_1/handoff.md` — Reviewer 1 defect report
+- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_challenger_m1_rust_1/handoff.md` — Challenger 1 report
+- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_challenger_m1_rust_2/handoff.md` — Challenger 2 report
+- `/workspaces/excellence-chart/.agents/teamwork/teamwork_preview_auditor_m1_rust/handoff.md` — Auditor CLEAN report

@@ -376,6 +376,24 @@ impl<'a, R: GridReader, D: DependencyTracker, F: FnMut() -> f64> Evaluator<'a, R
         env: &HashMap<String, ComputedValue>,
     ) -> Result<ComputedValue, ErrorCode> {
         let upper = name.to_uppercase();
+        let lower = name.to_lowercase();
+
+        // 0. Check if name is bound to a lambda in local env (LET parameters or lambda closures)
+        if let Some(closure_val @ ComputedValue::Lambda { .. }) = env.get(&lower).or_else(|| env.get(&upper)) {
+            return self.invoke_lambda(closure_val, args, current_addr, env, None);
+        }
+
+        // 0b. If not a standard registry function or special form, check workbook defined names
+        let is_special_form = matches!(upper.as_str(), "IF" | "IFS" | "LET" | "LAMBDA" | "OFFSET" | "INDIRECT" | "CHOOSE" | "SWITCH" | "IFERROR" | "IFNA");
+        if !is_special_form && self.registry.get(&upper).is_none() {
+            if let Some(def_name) = self.reader.get_defined_name(Some(&current_addr.sheet_id), name).or_else(|| self.reader.get_defined_name(None, name)) {
+                let parsed = parse_formula(&def_name.formula)?;
+                let def_val = self.eval_ast(&parsed, current_addr, env)?;
+                if matches!(def_val, ComputedValue::Lambda { .. }) {
+                    return self.invoke_lambda(&def_val, args, current_addr, env, Some((name, &def_val)));
+                }
+            }
+        }
 
         // 1. Validate declared arity
         self.registry.validate_arity(&upper, args.len())?;
@@ -432,6 +450,9 @@ impl<'a, R: GridReader, D: DependencyTracker, F: FnMut() -> f64> Evaluator<'a, R
                             ComputedValue::Scalar(s) => {
                                 out_scalars.push(s.clone());
                             }
+                            _ => {
+                                out_scalars.push(Scalar::error(ErrorCode::Calc));
+                            }
                         }
                     }
                     return ComputedValue::array(*rows, *cols, out_scalars);
@@ -449,6 +470,7 @@ impl<'a, R: GridReader, D: DependencyTracker, F: FnMut() -> f64> Evaluator<'a, R
                         return Ok(ComputedValue::boolean(false));
                     }
                 }
+                _ => return Err(ErrorCode::Calc),
             }
         }
 
@@ -485,6 +507,7 @@ impl<'a, R: GridReader, D: DependencyTracker, F: FnMut() -> f64> Evaluator<'a, R
                                     new_values.push(fb_vals.get(i).cloned().unwrap_or(Scalar::error(ErrorCode::NA)));
                                 }
                                 ComputedValue::Scalar(s) => new_values.push(s.clone()),
+                                _ => new_values.push(Scalar::error(ErrorCode::Calc)),
                             }
                         } else {
                             new_values.push(val);
@@ -499,6 +522,7 @@ impl<'a, R: GridReader, D: DependencyTracker, F: FnMut() -> f64> Evaluator<'a, R
                         return Ok(ComputedValue::Scalar(s));
                     }
                 }
+                Ok(ComputedValue::Lambda { .. }) => return self.eval_ast(&args[1], current_addr, env),
                 Err(_) => return self.eval_ast(&args[1], current_addr, env),
             }
         }
@@ -520,6 +544,7 @@ impl<'a, R: GridReader, D: DependencyTracker, F: FnMut() -> f64> Evaluator<'a, R
                                     new_values.push(fb_vals.get(i).cloned().unwrap_or(Scalar::error(ErrorCode::NA)));
                                 }
                                 ComputedValue::Scalar(s) => new_values.push(s.clone()),
+                                _ => new_values.push(Scalar::error(ErrorCode::Calc)),
                             }
                         } else {
                             new_values.push(val);
@@ -587,8 +612,22 @@ impl<'a, R: GridReader, D: DependencyTracker, F: FnMut() -> f64> Evaluator<'a, R
         }
 
         if upper == "LAMBDA" {
-            // A bare LAMBDA without application is #CALC!
-            return Err(ErrorCode::Calc);
+            if args.is_empty() {
+                return Err(ErrorCode::Value);
+            }
+            let body = args.last().unwrap().clone();
+            let mut params = Vec::with_capacity(args.len() - 1);
+            for p in &args[..args.len() - 1] {
+                match p {
+                    AstNode::NameRef(n) => params.push(n.to_lowercase()),
+                    _ => return Err(ErrorCode::Value),
+                }
+            }
+            return Ok(ComputedValue::Lambda {
+                params,
+                body: Box::new(body),
+                env: env.clone(),
+            });
         }
 
         if upper == "OFFSET" {
@@ -683,6 +722,48 @@ impl<'a, R: GridReader, D: DependencyTracker, F: FnMut() -> f64> Evaluator<'a, R
         invoke_standard_function(&upper, &evaluated_args, self.now_ms, &mut self.random_fn)
     }
 
+    fn invoke_lambda(
+        &mut self,
+        lambda_val: &ComputedValue,
+        args: &[AstNode],
+        current_addr: &CellAddress,
+        caller_env: &HashMap<String, ComputedValue>,
+        self_binding: Option<(&str, &ComputedValue)>,
+    ) -> Result<ComputedValue, ErrorCode> {
+        let (params, body, closure_env) = match lambda_val {
+            ComputedValue::Lambda { params, body, env } => (params, body, env),
+            _ => return Err(ErrorCode::Value),
+        };
+
+        self.lambda_depth += 1;
+        if self.lambda_depth > self.limits.max_lambda_depth {
+            return Err(ErrorCode::Calc);
+        }
+
+        if args.len() != params.len() {
+            self.lambda_depth -= 1;
+            return Err(ErrorCode::Value);
+        }
+
+        let mut local_env = closure_env.clone();
+        for (k, v) in caller_env {
+            local_env.entry(k.clone()).or_insert_with(|| v.clone());
+        }
+        if let Some((self_name, self_val)) = self_binding {
+            local_env.insert(self_name.to_lowercase(), self_val.clone());
+            local_env.insert(self_name.to_uppercase(), self_val.clone());
+        }
+
+        for (param_name, arg_node) in params.iter().zip(args.iter()) {
+            let arg_val = self.eval_ast(arg_node, current_addr, caller_env)?;
+            local_env.insert(param_name.to_lowercase(), arg_val);
+        }
+
+        let res = self.eval_ast(body, current_addr, &local_env);
+        self.lambda_depth -= 1;
+        res
+    }
+
     fn eval_apply(
         &mut self,
         callee: &AstNode,
@@ -690,39 +771,12 @@ impl<'a, R: GridReader, D: DependencyTracker, F: FnMut() -> f64> Evaluator<'a, R
         current_addr: &CellAddress,
         env: &HashMap<String, ComputedValue>,
     ) -> Result<ComputedValue, ErrorCode> {
-        self.lambda_depth += 1;
-        if self.lambda_depth > self.limits.max_lambda_depth {
-            return Err(ErrorCode::Calc);
-        }
-
-        if let AstNode::FunctionCall { name, args: lambda_args } = callee {
-            if name.eq_ignore_ascii_case("LAMBDA") {
-                if lambda_args.is_empty() {
-                    return Err(ErrorCode::Value);
-                }
-                let body = lambda_args.last().unwrap();
-                let param_count = lambda_args.len() - 1;
-                if args.len() != param_count {
-                    return Err(ErrorCode::Value);
-                }
-
-                let mut local_env = env.clone();
-                for i in 0..param_count {
-                    let p_name = match &lambda_args[i] {
-                        AstNode::NameRef(n) => n.to_lowercase(),
-                        _ => return Err(ErrorCode::Value),
-                    };
-                    let arg_val = self.eval_ast(&args[i], current_addr, env)?;
-                    local_env.insert(p_name, arg_val);
-                }
-
-                let res = self.eval_ast(body, current_addr, &local_env);
-                self.lambda_depth -= 1;
-                return res;
+        let callee_val = self.eval_ast(callee, current_addr, env)?;
+        match callee_val {
+            ComputedValue::Lambda { .. } => {
+                self.invoke_lambda(&callee_val, args, current_addr, env, None)
             }
+            _ => Err(ErrorCode::Value),
         }
-
-        self.lambda_depth -= 1;
-        Err(ErrorCode::Value)
     }
 }

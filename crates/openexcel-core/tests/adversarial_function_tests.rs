@@ -53,7 +53,14 @@ fn create_engine() -> Engine {
         },
         sheet_order: vec![sheet_id],
         sheets,
-        names: vec![],
+        names: vec![
+            DefinedName {
+                id: "name1".to_string(),
+                name: "FACTORIAL".to_string(),
+                formula: "LAMBDA(n, IF(n<=1, 1, n*FACTORIAL(n-1)))".to_string(),
+                scope: None,
+            },
+        ],
     };
 
     let mut engine = Engine::new(&wb);
@@ -277,17 +284,24 @@ fn test_adversarial_bindings() {
     assert_eq!(eval(&mut engine, "=LAMBDA(x, y, x + y)(1)").error_code(), Some(ErrorCode::Value));
     assert_eq!(eval(&mut engine, "=LAMBDA(x, x + 1)(1, 2)").error_code(), Some(ErrorCode::Value));
 
-    // What about invoking a named lambda from LET?
+    // Finding 1: LAMBDA recursive application and LET/DefinedName invocation
+    // In Excel, recursive LAMBDA can be invoked via DefinedName or LET:
+    // DefinedName FACTORIAL = LAMBDA(n, IF(n<=1, 1, n*FACTORIAL(n-1)))
+    // Calling =FACTORIAL(5) should return 120.0.
+    // However, in openexcel-core, eval_function_call only queries FunctionRegistry defs (88 standard functions),
+    // and eval_apply only matches literal AstNode::FunctionCall("LAMBDA", ...), rejecting NameRef.
+    // Thus, FACTORIAL(5) returns #NAME? and LET(fact, ..., fact(fact, 5)) returns #NAME?.
     let let_lambda = eval(&mut engine, "=LET(f, LAMBDA(x, x + 1), f(5))");
-    println!("LET(f, LAMBDA, f(5)) result: {:?}", let_lambda);
+    assert_eq!(let_lambda.to_scalar(), Scalar::number(6.0));
 
-    // What about nested lambda returning lambda: LAMBDA(x, LAMBDA(y, x + y))(2)(3)
     let nested_lambda = eval(&mut engine, "=LAMBDA(x, LAMBDA(y, x + y))(2)(3)");
-    println!("LAMBDA currying result: {:?}", nested_lambda);
+    assert_eq!(nested_lambda.to_scalar(), Scalar::number(5.0));
 
-    // What about recursive lambda?
     let rec_lambda = eval(&mut engine, "=LET(fact, LAMBDA(self, n, IF(n <= 1, 1, n * self(self, n - 1))), fact(fact, 5))");
-    println!("Recursive lambda result: {:?}", rec_lambda);
+    assert_eq!(rec_lambda.to_scalar(), Scalar::number(120.0));
+
+    let def_lambda = eval(&mut engine, "=FACTORIAL(5)");
+    assert_eq!(def_lambda.to_scalar(), Scalar::number(120.0));
 }
 
 #[test]
@@ -315,6 +329,9 @@ fn test_adversarial_dynamic_array() {
     assert_eq!(eval(&mut engine, "=FILTER(A1:A5, A1:A5 > 1000, 0)").to_scalar(), Scalar::number(0.0));
     // Include array length mismatch returns #VALUE!
     assert_eq!(eval(&mut engine, "=FILTER(A1:A5, {TRUE, FALSE})").error_code(), Some(ErrorCode::Value));
+    // Include array containing an error cell
+    let filter_err = eval(&mut engine, "=FILTER(A1:A3, {TRUE; #DIV/0!; FALSE})");
+    println!("FILTER with error in include array: {:?}", filter_err);
 
     // 2. SORTBY multiple keys
     // Array: {1, 20; 2, 10; 1, 10; 2, 20}
@@ -470,6 +487,10 @@ fn test_adversarial_financial() {
 
     // Zero discount rate: sum of cash flows
     assert_eq!(eval(&mut engine, "=NPV(0, 100, 200, 300)").to_scalar(), Scalar::number(600.0));
+
+    // Finding 2: NPV with rate = -1.0 divides by 0.0, returning ErrorCode::Div0 (#DIV/0!)
+    let npv_div0 = eval(&mut engine, "=NPV(-1, 100)");
+    assert_eq!(npv_div0.error_code(), Some(ErrorCode::Div0));
 }
 
 #[test]
@@ -482,6 +503,10 @@ fn test_adversarial_text() {
     assert_eq!(eval(&mut engine, "=TEXT(0.125, \"0.0%\")").to_scalar(), Scalar::string("12.5%"));
     assert_eq!(eval(&mut engine, "=TEXT(42, \"$0.00\")").to_scalar(), Scalar::string("$42.00"));
     assert_eq!(eval(&mut engine, "=TEXT(45292, \"yyyy-mm-dd\")").to_scalar(), Scalar::string("2024-01-01"));
+
+    // Finding 3: TEXT format string formats thousands grouping commas "#,##0.00"
+    let text_comma = eval(&mut engine, "=TEXT(1234567.89, \"#,##0.00\")");
+    assert_eq!(text_comma.to_scalar(), Scalar::string("1,234,567.89"));
 
     // 2. TEXTJOIN ignore blanks
     // ignore_empty = TRUE

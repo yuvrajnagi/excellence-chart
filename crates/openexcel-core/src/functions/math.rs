@@ -93,6 +93,7 @@ pub fn count(args: &[ComputedValue]) -> Result<ComputedValue, ErrorCode> {
                 }
                 _ => {}
             },
+            _ => {}
         }
     }
     Ok(ComputedValue::number(total_count as f64))
